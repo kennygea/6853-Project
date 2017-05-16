@@ -99,21 +99,21 @@ class DCGAN(object):
     if self.y_dim:
       self.G_one = self.generator(self.z, self.y)
       self.G_two = self.generator(self.z, self.y, reuse=True)
-      #self.G_three = self.generator(self.z, self.y, reuse=True)
+      self.G_three = self.generator(self.z, self.y, reuse=True)
 
       self.sum_a = tf.add(self.G_one, self.G_two)
-      #self.sum_a = tf.add(tf.add(self.G_one, self.G_two), self.G_three)
+      self.sum_a = tf.add(self.sum_a, self.G_three)
       self.weight_one = tf.divide(self.G_one, self.sum_a)
       self.weight_two = tf.divide(self.G_two, self.sum_a)
-      #self.weight_three = tf.divide(self.G_three, self.sum_a)
+      self.weight_three = tf.divide(self.G_three, self.sum_a)
 
       self.compare = tf.greater_equal(self.weight_one, self.weight_two)
-      #self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
+      self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
       self.G = tf.where(self.compare, self.G_one, self.G_two)
 
-      #self.compare = tf.greater_equal(self.intermediate_weights, self.weight_three)
-      #self.G = tf.where(self.compare, self.G, self.G_three)
-
+      self.compare = tf.greater_equal(self.intermediate_weights, self.weight_three)
+      self.G = tf.where(self.compare, self.G, self.G_three)
+      #self.G = self.G_one
 
       self.D, self.D_logits = \
           self.discriminator(inputs, self.y, reuse=False)
@@ -122,14 +122,17 @@ class DCGAN(object):
           self.discriminator(self.G, self.y, reuse=True)
       self.D_two, self.D_logits_two = \
           self.discriminator(self.G, self.y, reuse=True)     
-      #self.D_three, self.D_logits_three = \
-      #    self.discriminator(self.G, self.y, reuse=True)     
+      self.D_three, self.D_logits_three = \
+          self.discriminator(self.G, self.y, reuse=True)     
 
-      self.D_logits_ = tf.divide(tf.add(self.D_logits_one, self.D_logits_two), self.T)
-      self.D_ = tf.divide(tf.add(self.D_one, self.D_two), self.T)
+      # self.D_ = self.D_one
+      # self.D_logits_ = self.D_logits_one
 
-      #self.D_logits_ = tf.divide(tf.add(tf.add(self.D_logits_one, self.D_logits_two), self.D_logits_three), self.T)
-      #self.D_ = tf.divide(tf.add(tf.add(self.D_one, self.D_two), self.D_three), self.T)
+      # self.D_logits_ = tf.divide(tf.add(self.D_logits_one, self.D_logits_two), self.T)
+      # self.D_ = tf.divide(tf.add(self.D_one, self.D_two), self.T)
+
+      self.D_logits_ = tf.divide(tf.add(tf.add(self.D_logits_one, self.D_logits_two), self.D_logits_three), self.T)
+      self.D_ = tf.divide(tf.add(tf.add(self.D_one, self.D_two), self.D_three), self.T)
 
     else:
       self.G_one = self.generator(self.z)
@@ -137,20 +140,20 @@ class DCGAN(object):
       #self.G_three = self.generator(self.z, reuse=True)
 
       self.sum_a = tf.add(self.G_one, self.G_two)
-      #self.sum_a = tf.add(tf.add(self.G_one, self.G_two), self.G_three)
+      #self.sum_a = tf.add(self.sum_a, self.G_three)
       self.weight_one = tf.divide(self.G_one, self.sum_a)
       self.weight_two = tf.divide(self.G_two, self.sum_a)
       #self.weight_three = tf.divide(self.G_three, self.sum_a)
 
       self.compare = tf.greater_equal(self.weight_one, self.weight_two)
-      #self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
+      self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
       self.G = tf.where(self.compare, self.G_one, self.G_two)
 
       #self.compare = tf.greater_equal(self.intermediate_weights, self.weight_three)
       #self.G = tf.where(self.compare, self.G, self.G_three)
+      # self.G = self.G_one
 
       self.D, self.D_logits = self.discriminator(inputs)
-
       self.sampler = self.sampler(self.z)
       self.D_one, self.D_logits_one = self.discriminator(self.G, reuse=True)
       self.D_two, self.D_logits_two = self.discriminator(self.G, reuse=True)
@@ -159,10 +162,11 @@ class DCGAN(object):
       self.D_logits_ = tf.divide(tf.add(self.D_logits_one, self.D_logits_two), self.T)
       self.D_ = tf.divide(tf.add(self.D_one, self.D_two), self.T) 
 
-      self.D_logits_ = tf.divide(tf.add(tf.add(self.D_logits_one, self.D_logits_two), self.D_logits_three), self.T)
-      self.D_ = tf.divide(tf.add(tf.add(self.D_one, self.D_two), self.D_three), self.T)
+      # self.D_logits_ = tf.divide(tf.add(tf.add(self.D_logits_one, self.D_logits_two), self.D_logits_three), self.T)
+      # self.D_ = tf.divide(tf.add(tf.add(self.D_one, self.D_two), self.D_three), self.T)
 
-
+      # self.D_ = self.D_one
+      # self.D_logits_ = self.D_logits_one
 
     self.d_sum = histogram_summary("d", self.D)
     self.d__sum = histogram_summary("d_", self.D_)
