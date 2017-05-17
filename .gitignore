@@ -1,4 +1,9 @@
 # Data
+*el
+*pdf
+paper/compile_refs.py
+paper/auto/
+
 data
 samples
 *.zip
