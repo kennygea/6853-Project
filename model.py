@@ -108,43 +108,28 @@ class DCGAN(object):
       # self.G_four = self.generator(self.z, self.y, reuse=True)
       # self.G_five = self.generator(self.z, self.y, reuse=True)
 
+      def f_activation(z_i, d):
+        return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.z, tf.subtract(z_i, d/2.0)), d)), \
+          tf.maximum(tf.divide(tf.subtract(self.z, tf.add(z_i, d/2.0)), d)))
+
       for i in range(self.T-1):
-        self.sum_a = tf.add(G[i], G[i+1])
-      # self.sum_a = tf.add(self.G_one, self.G_two)
-      # self.sum_a = tf.add(self.sum_a, self.G_three)
-      # self.sum_a = tf.add(self.sum_a, self.G_four)
-      # self.sum_a = tf.add(self.sum_a, self.G_five)
+        for j in range(i+1, self.T):
+          difference = tf.abs(tf.subtract(G[i], G[j]))
+          if i == 0 && j == 0:
+            m = difference
+          else:
+            m = tf.minimum(difference, m)
+      d = tf.reduce_min(m)
+
       weights = []
+      for i in G
+        weights.append(f_activation(i, d))
+
       for i in range(self.T):
-        weights.append(tf.divide(G[i], self.sum_a))
-      # self.weight_one = tf.divide(self.G_one, self.sum_a)
-      # self.weight_two = tf.divide(self.G_two, self.sum_a)
-      # self.weight_three = tf.divide(self.G_three, self.sum_a)
-      # self.weight_four = tf.divide(self.G_four, self.sum_a)
-      # self.weight_five = tf.divide(self.G_five, self.sum_a)
-
-      for i in range(self.T-1):
         if i == 0:
-          compare = tf.greater_equal(weights[i], weights[i+1])
-          intermediate_weights = tf.where(compare, weights[i], weights[i+1])
-          self.G = tf.where(compare, G[i], G[i+1])
+          self.G = tf.multiply(self.G[i], weights[i])
         else:
-          compare = tf.greater_equal(intermediate_weights, weights[i+1])
-          intermediate_weights = tf.where(compare, intermediate_weights, weights[i+1])
-          self.G = tf.where(compare, self.G, G[i+1])
-
-
-      # self.compare = tf.greater_equal(self.weight_one, self.weight_two)
-      # self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
-      # self.G = tf.where(self.compare, self.G_one, self.G_two)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_three)
-      # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_three)
-      # self.G = tf.where(self.compare, self.G, self.G_three)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_four)
-      # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_four)
-      # self.G = tf.where(self.compare, self.G, self.G_four)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_five)
-      # self.G = tf.where(self.compare, self.G, self.G_five)
+          self.G = tf.add(self.G, tf.multiply(self.G[i], weights[i]))
 
 
       self.D, self.D_logits = \
@@ -191,9 +176,19 @@ class DCGAN(object):
       # self.sum_a = tf.add(self.sum_a, self.G_three)
       # self.sum_a = tf.add(self.sum_a, self.G_four)
       # self.sum_a = tf.add(self.sum_a, self.G_five)
+      alpha = []
+      for i in range(self.T):
+        if i == 0:
+          alpha.append(alpha())
+        else:
+          alpha.append(alpha(reuse=True))
+
       weights = []
       for i in range(self.T):
-        weights.append(tf.divide(G[i], self.sum_a))
+        weights.append(tf.exp(alpha[i]))
+
+
+
       # self.weight_one = tf.divide(self.G_one, self.sum_a)
       # self.weight_two = tf.divide(self.G_two, self.sum_a)
       # self.weight_three = tf.divide(self.G_three, self.sum_a)
