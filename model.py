@@ -135,11 +135,12 @@ class DCGAN(object):
 
       final_x = tf.cast(f_left_shift - f, tf.float32)
 
-      G_packed = tf.pack(G)
+      final_x = tf.unpack(final_x)
 
-      activated = tf.multiply(G_packed, final_x)
 
-      self.G = tf.reduce_sum(activated, axis=0)
+      activated = [tf.multiply(G[i], final_x[i]) for i in range(self.T)]
+
+      self.G = tf.add_n(activated)
 
       self.D, self.D_logits = \
       self.discriminator(inputs, self.y, reuse=False)
