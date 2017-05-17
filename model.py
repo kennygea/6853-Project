@@ -368,6 +368,7 @@ class DCGAN(object):
           # Update G network
           _, summary_str = self.sess.run([g_optim, self.g_sum],
             feed_dict={
+              self.inputs: batch_images,
               self.z: batch_z, 
               self.y:batch_labels,
             })
@@ -454,7 +455,6 @@ class DCGAN(object):
     with tf.variable_scope("activator") as scope:
       if reuse:
         scope.reuse_variables()
-
       return tf.subtract(tf.maximum(tf.divide(tf.subtract(image, tf.subtract(tf.cast(v_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
         tf.maximum(tf.divide(tf.subtract(image, tf.add(tf.cast(v_i, tf.float32), tf.divide(d, 2.0))), d), 0))
 
