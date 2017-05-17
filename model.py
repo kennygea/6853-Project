@@ -109,25 +109,25 @@ class DCGAN(object):
       # self.G_five = self.generator(self.z, self.y, reuse=True)
 
       def f_activation(z_i, d):
-        return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.z, tf.subtract(z_i, d/2.0)), d)), \
-          tf.maximum(tf.divide(tf.subtract(self.z, tf.add(z_i, d/2.0)), d)))
+        return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.z, tf.subtract(z_i, d/2.0)), d), 0), \
+          tf.maximum(tf.divide(tf.subtract(self.z, tf.add(z_i, d/2.0)), d), 0))
 
       for i in range(self.T-1):
         for j in range(i+1, self.T):
           difference = tf.abs(tf.subtract(G[i], G[j]))
-          if i == 0 && j == 0:
+          if i == 0 and j == 1:
             m = difference
           else:
             m = tf.minimum(difference, m)
       d = tf.reduce_min(m)
 
       weights = []
-      for i in G
+      for i in G:
         weights.append(f_activation(i, d))
 
       for i in range(self.T):
         if i == 0:
-          self.G = tf.multiply(self.G[i], weights[i])
+          self.G = tf.multiply(G[i], weights[i])
         else:
           self.G = tf.add(self.G, tf.multiply(self.G[i], weights[i]))
 
