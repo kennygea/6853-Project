@@ -120,11 +120,11 @@ class DCGAN(object):
       weights = []
       for i in range(self.T):
         if i == 0:
-          weights.append(tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
-            tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0)))
+          weights.append(tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(G[i], tf.float32), tf.divide(d, 2.0))), d), 0), \
+            tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(G[i], tf.float32), tf.divide(d, 2.0))), d), 0)))
         else:
-          weights.append(tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
-            tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0)))
+          weights.append(tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(G[i], tf.float32), tf.divide(d, 2.0))), d), 0), \
+            tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(G[i], tf.float32), tf.divide(d, 2.0))), d), 0)))
 
       for i in range(self.T):
         if i == 0:
