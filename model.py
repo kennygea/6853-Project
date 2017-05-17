@@ -98,7 +98,7 @@ class DCGAN(object):
       tf.float32, [None, self.z_dim], name='z')
     self.z_sum = histogram_summary("z", self.z)
 
-    self.h = tf.placeholder(tf.float64, name="h")
+    self.h = tf.placeholder(tf.float64, [], name="h")
 
     if self.y_dim:
       G = []
@@ -121,37 +121,52 @@ class DCGAN(object):
       for a in alphas:
         weights.append(tf.exp(a))
         
-      probs = [weights[i]/sum(weights) for i in range(T)]
+      self.probs = [weights[i]/sum(weights) for i in range(self.T)]
 
-      z = tf.pack([sum(probs[:i+1]) for i in range(T)])
+      z = tf.pack([sum(self.probs[:i+1]) for i in range(self.T)])
+      z = tf.cast(z, tf.float64)
+      inputs_minus_delta = (tf.ones((self.T,),dtype=tf.float64) *self.h - z - self.delta/2)/self.delta
+      inputs_plus_delta = (tf.ones((self.T,),dtype=tf.float64) *self.h - z + self.delta/2)/self.delta
 
-      inputs_minus_delta = (tf.ones((T,),dtype=tf.float64) * h - z - delta/2)/delta
-      inputs_plus_delta = (tf.ones((T,),dtype=tf.float64) * h - z + delta/2)/delta
+      f = tf.sigmoid(inputs_plus_delta * self.sigmoid_multiplier) * inputs_plus_delta - \
+          tf.sigmoid(inputs_minus_delta * self.sigmoid_multiplier) * inputs_minus_delta    
 
-      f = tf.sigmoid(inputs_plus_delta * sigmoid_multiplier) * inputs_plus_delta - \
-          tf.sigmoid(inputs_minus_delta * sigmoid_multiplier) * inputs_minus_delta    
-
-      f_left_shift = tf.concat(0, [tf.ones((1,),dtype=tf.float64), tf.slice(f, (0,), (T-1,))])
+      f_left_shift = tf.concat(0, [tf.ones((1,),dtype=tf.float64), tf.slice(f, (0,), (self.T-1,))])
 
       final_x = tf.cast(f_left_shift - f, tf.float32)
+      activated = []
+      final_x = tf.unpack(final_x)
+      for i in range(self.T):
+        activated.append(tf.multiply(G[i], final_x[i]))
+      activated = tf.pack(activated)
 
-      G_packed = tf.pack(G)
+      self.G = tf.reduce_sum(activated, axis=0)
 
-      activated = tf.multiply(G_packed, final_x)
+      alphas_d = []
+      for i in range(self.T):
+        alphas_d.append(self.alpha_d(i))
 
-      self.G = tf.add_n(activated)
+      weights_d = []
+      for a in alphas_d:
+        weights_d.append(tf.exp(a))
+
+      self.probs_d = [weights_d[i]/sum(weights_d) for i in range(self.T)] 
 
       self.D, self.D_logits = \
-          self.discriminator(inputs, self.y, reuse=False)
+      self.discriminator(inputs, self.y, reuse=False)
       self.sampler = self.sampler(self.z, self.y)
       D = []
+      DL = []
       for i in range(self.T):
-        D.append(self.discriminator(self.G, self.y, reuse=True))
+        d, dl = self.discriminator(self.G, self.y, reuse=True)
+        D.append(tf.multiply(d, self.probs_d[i]))
+        DL.append(tf.multiply(dl, self.probs_d[i]))
    
-      self.D_logits_ = tf.divide(tf.add_n(D), self.T)
-      self.D_ = tf.divide(tf.add_n(D), self.T)
+      self.D_logits_ = tf.add_n(DL)
+      self.D_ = tf.add_n(D)
 
     else:
+      print("hi")
       # G = []
       # for i in range(self.T):
       #   if i == 0:
@@ -256,8 +271,17 @@ class DCGAN(object):
 
     self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
     self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
-                          
-    self.d_loss = self.d_loss_real + self.d_loss_fake
+
+    for i in range(self.T):
+      term = tf.log(self.probs[i]) + tf.log(self.probs_d[i])
+      if i == 0:
+        self.r_ent = term
+      else:
+        self.r_ent = tf.add(self.r_ent, term)
+
+    self.r_ent = tf.divide(self.r_ent, self.T)
+    self.g_loss = self.g_loss - self.r_ent
+    self.d_loss = self.d_loss_real + self.d_loss_fake - self.r_ent
 
     self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
     self.d_loss_sum = scalar_summary("d_loss", self.d_loss)
@@ -352,7 +376,7 @@ class DCGAN(object):
               .astype(np.float32)
 
         h = sp.random.uniform(0,1)
-
+        h = np.float64(h)
         if config.dataset == 'mnist':
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
@@ -360,6 +384,7 @@ class DCGAN(object):
               self.inputs: batch_images,
               self.z: batch_z,
               self.y:batch_labels,
+              self.h: h
             })
           self.writer.add_summary(summary_str, counter)
 
@@ -374,20 +399,23 @@ class DCGAN(object):
 
           # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
           _, summary_str = self.sess.run([g_optim, self.g_sum],
-            feed_dict={ self.z: batch_z, self.y:batch_labels })
+            feed_dict={ self.z: batch_z, self.y:batch_labels, self.h: h })
           self.writer.add_summary(summary_str, counter)
           
           errD_fake = self.d_loss_fake.eval({
               self.z: batch_z, 
-              self.y:batch_labels
+              self.y:batch_labels,
+              self.h: h
           })
           errD_real = self.d_loss_real.eval({
               self.inputs: batch_images,
-              self.y:batch_labels
+              self.y:batch_labels,
+              self.h: h
           })
           errG = self.g_loss.eval({
               self.z: batch_z,
-              self.y: batch_labels
+              self.y: batch_labels,
+              self.h: h
           })
         else:
           # Update D network
@@ -422,6 +450,7 @@ class DCGAN(object):
                   self.z: sample_z,
                   self.inputs: sample_inputs,
                   self.y:sample_labels,
+                  self.h: h
               }
             )
             manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
@@ -454,14 +483,21 @@ class DCGAN(object):
       with tf.variable_scope("alpha") as scope:
         if reuse:
           scope.reuse_variables()
-        alpha = tf.variable(1/self.T, name= 'g_alpha_' + i)
+        alpha = tf.Variable(1/self.T, name= 'g_alpha_' + i)
         return alpha
+
+  def alpha_d(self, i, reuse=False):
+    i = str(i)
+    with tf.variable_scope('alpha_d') as scope:
+      if reuse:
+        scope.reuse_variables()
+      alpha = tf.Variable(1/self.T, name= 'd_alpha_' + i)
+      return alpha
 
   def discriminator(self, image, y=None, reuse=False):
     with tf.variable_scope("discriminator") as scope:
       if reuse:
         scope.reuse_variables()
-
       if not self.y_dim:
         h0 = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
         h1 = lrelu(self.d_bn1(conv2d(h0, self.df_dim*2, name='d_h1_conv')))
