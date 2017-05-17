@@ -98,7 +98,7 @@ class DCGAN(object):
       tf.float32, [None, self.z_dim], name='z')
     self.z_sum = histogram_summary("z", self.z)
 
-    self.h = tf.placeholder(tf.float64, name="h")
+    self.h = tf.placeholder(tf.float64, [], name="h")
 
     if self.y_dim:
       G = []
@@ -136,16 +136,15 @@ class DCGAN(object):
       final_x = tf.cast(f_left_shift - f, tf.float32)
 
       G_packed = tf.pack(G)
-      print(final_x)
-      print(G_packed)
+      print(final_x.get_shape())
+      print(G_packed.get_shape())
 
       activated = tf.multiply(G_packed, final_x)
 
       print(activated)
 
       self.G = tf.reduce_sum(activated, axis=0)
-      self.G = tf.reshape(self.G, [self.batch_size, self.output_height, self.output_width, self.c_dim])
-
+      
       self.D, self.D_logits = \
       self.discriminator(inputs, self.y, reuse=False)
       self.sampler = self.sampler(self.z, self.y)
