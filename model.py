@@ -454,7 +454,7 @@ class DCGAN(object):
   def f_activation(self, z_i, d, reuse=False):
     with tf.variable_scope("activator") as scope:
       if reuse:
-        scope.reuse_variable()
+        scope.reuse_variables()
       return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
         tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0))
 
