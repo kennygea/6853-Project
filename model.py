@@ -109,7 +109,7 @@ class DCGAN(object):
       # self.G_five = self.generator(self.z, self.y, reuse=True)
 
       def f_activation(z_i, d):
-        return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.z, tf.subtract(z_i, d/2.0)), d), 0), \
+        return tf.subtract(tf.maximum(tf.divide(tf.subtract(inputs, tf.subtract(z_i, d/2.0)), d), 0), \
           tf.maximum(tf.divide(tf.subtract(self.z, tf.add(z_i, d/2.0)), d), 0))
 
       for i in range(self.T-1):
