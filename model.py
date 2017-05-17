@@ -141,16 +141,26 @@ class DCGAN(object):
       activated = tf.pack(activated)
 
       self.G = tf.reduce_sum(activated, axis=0)
-      print(self.G.get_shape())
+
+      alphas_d = []
+      for i in range(self.T):
+        alphas_d.append(self.alpha_d(i))
+
+      weights_d = []
+      for a in alpha_d:
+        weights.append(tf.exp(a))
+
       self.D, self.D_logits = \
       self.discriminator(inputs, self.y, reuse=False)
       self.sampler = self.sampler(self.z, self.y)
       D = []
+      DL = []
       for i in range(self.T):
-        D.append(self.discriminator(self.G, self.y, reuse=True))
+        D.append(tf.multiply(self.discriminator(self.G, self.y, reuse=True)[0], weights_d[i]))
+        DL.append(tf.multiply(self.discriminator(self.G, self.y, reuse=True)[1], weights_d[i]))
    
       self.D_logits_ = tf.divide(tf.add_n(D), self.T)
-      self.D_ = tf.divide(tf.add_n(D), self.T)
+      self.D_ = tf.add_n(D)
 
     else:
       print("hi")
@@ -463,6 +473,14 @@ class DCGAN(object):
           scope.reuse_variables()
         alpha = tf.Variable(1/self.T, name= 'g_alpha_' + i)
         return alpha
+
+  def alpha_d(self, i, reuse=False):
+    i = str(i):
+    with tf.variable_scope('alpha_d') as scope:
+      if reuse:
+        scope.reuse_variables()
+      alpha = tf.Variable(1/self.T, name= 'd_alpha_' + i)
+      return alpha
 
   def discriminator(self, image, y=None, reuse=False):
     with tf.variable_scope("discriminator") as scope:
