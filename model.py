@@ -455,8 +455,8 @@ class DCGAN(object):
     with tf.variable_scope("activator") as scope:
       if reuse:
         scope.reuse_variable()
-      return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(z_i, d/2.0)), d), 0), \
-        tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(z_i, d/2.0)), d), 0))
+      return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(z_i, tf.divide(d, 2.0))), d), 0), \
+        tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(z_i, tf.divide(d, 2.0))), d), 0))
 
   def discriminator(self, image, y=None, reuse=False):
     with tf.variable_scope("discriminator") as scope:
