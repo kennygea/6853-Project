@@ -147,17 +147,18 @@ class DCGAN(object):
         alphas_d.append(self.alpha_d(i))
 
       weights_d = []
-      for a in alpha_d:
-        weights.append(tf.exp(a))
-
+      for a in alphas_d:
+        weights_d.append(tf.exp(a))
+      probs_d = [weights_d[i]/sum(weights_d) for i in range(self.T)] 
       self.D, self.D_logits = \
       self.discriminator(inputs, self.y, reuse=False)
       self.sampler = self.sampler(self.z, self.y)
       D = []
       DL = []
       for i in range(self.T):
-        D.append(tf.multiply(self.discriminator(self.G, self.y, reuse=True)[0], weights_d[i]))
-        DL.append(tf.multiply(self.discriminator(self.G, self.y, reuse=True)[1], weights_d[i]))
+        d, dl = self.discriminator(self.G, self.y, reuse=True)
+        D.append(tf.multiply(d, probs_d[i]))
+        DL.append(tf.multiply(dl, probs_d[i]))
    
       self.D_logits_ = tf.divide(tf.add_n(D), self.T)
       self.D_ = tf.add_n(D)
@@ -475,7 +476,7 @@ class DCGAN(object):
         return alpha
 
   def alpha_d(self, i, reuse=False):
-    i = str(i):
+    i = str(i)
     with tf.variable_scope('alpha_d') as scope:
       if reuse:
         scope.reuse_variables()
