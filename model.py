@@ -71,7 +71,7 @@ class DCGAN(object):
 
     self.dataset_name = dataset_name
     self.input_fname_pattern = input_fname_pattern
-    self.checkpoint_dir = checkpoint_di
+    self.checkpoint_dir = checkpoint_dir
     self.build_model()
 
   def build_model(self):
