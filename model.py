@@ -357,8 +357,7 @@ class DCGAN(object):
         batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
               .astype(np.float32)
 
-        h = sp.random.uniform(0,1)
-        h = np.float64(h)
+        h = tf.random_uniform(0, 0,1, dtype=tf.float64 )
         if config.dataset == 'mnist':
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
