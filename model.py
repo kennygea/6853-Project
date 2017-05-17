@@ -357,7 +357,7 @@ class DCGAN(object):
         batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
               .astype(np.float32)
 
-        h = tf.random_uniform(0, 0,1, dtype=tf.float64 )
+        h = sp.random.uniform(0,1)
         if config.dataset == 'mnist':
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
@@ -365,6 +365,7 @@ class DCGAN(object):
               self.inputs: batch_images,
               self.z: batch_z,
               self.y:batch_labels,
+              self.h: h
             })
           self.writer.add_summary(summary_str, counter)
 
@@ -466,7 +467,6 @@ class DCGAN(object):
     with tf.variable_scope("discriminator") as scope:
       if reuse:
         scope.reuse_variables()
-
       if not self.y_dim:
         h0 = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
         h1 = lrelu(self.d_bn1(conv2d(h0, self.df_dim*2, name='d_h1_conv')))
