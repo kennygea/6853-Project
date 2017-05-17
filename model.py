@@ -358,7 +358,7 @@ class DCGAN(object):
               .astype(np.float32)
 
         h = sp.random.uniform(0,1)
-        h = np.double(h)
+        h = np.float64(h)
         if config.dataset == 'mnist':
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
