@@ -21,8 +21,6 @@ f = tf.sigmoid(inputs_plus_delta * sigmoid_multiplier) * inputs_plus_delta - \
 f_left_shift = tf.concat(0, [tf.ones((1,),dtype=tf.float64), tf.slice(f, (0,), (T-1,))])
 
 final_x = tf.cast(f_left_shift - f, tf.float32)
-
-
 init_op = tf.initialize_all_variables()
 
 with tf.Session() as sess:
