@@ -11,48 +11,68 @@ from ops import *
 from utils import *
 
 def conv_out_size_same(size, stride):   
-  self.T = 5
-  self.sess = sess
-  self.is_crop = is_crop
-  self.is_grayscale = (c_dim == 1)
+  return int(math.ceil(float(size) / float(stride)))
 
-  self.batch_size = batch_size
-  self.sample_num = sample_num
+class DCGAN(object):
+  def __init__(self, sess, input_height=108, input_width=108, is_crop=True,
+         batch_size=64, sample_num = 64, output_height=64, output_width=64,
+         y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
+         gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
+         input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None):
+    """
+    Args:
+      sess: TensorFlow session
+      batch_size: The size of batch. Should be specified before training.
+      y_dim: (optional) Dimension of dim for y. [None]
+      z_dim: (optional) Dimension of dim for Z. [100]
+      gf_dim: (optional) Dimension of gen filters in first conv layer. [64]
+      df_dim: (optional) Dimension of discrim filters in first conv layer. [64]
+      gfc_dim: (optional) Dimension of gen units for for fully connected layer. [1024]
+      dfc_dim: (optional) Dimension of discrim units for fully connected layer. [1024]
+      c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
+    """
+    self.T = 5
+    self.sess = sess
+    self.is_crop = is_crop
+    self.is_grayscale = (c_dim == 1)
 
-  self.input_height = input_height
-  self.input_width = input_width
-  self.output_height = output_height
-  self.output_width = output_width
+    self.batch_size = batch_size
+    self.sample_num = sample_num
 
-  self.y_dim = y_dim
-  self.z_dim = z_dim
+    self.input_height = input_height
+    self.input_width = input_width
+    self.output_height = output_height
+    self.output_width = output_width
 
-  self.gf_dim = gf_dim
-  self.df_dim = df_dim
+    self.y_dim = y_dim
+    self.z_dim = z_dim
 
-  self.gfc_dim = gfc_dim
-  self.dfc_dim = dfc_dim
+    self.gf_dim = gf_dim
+    self.df_dim = df_dim
 
-  self.c_dim = c_dim
+    self.gfc_dim = gfc_dim
+    self.dfc_dim = dfc_dim
 
-  # batch normalization : deals with poor initialization helps gradient flow
-  self.d_bn1 = batch_norm(name='d_bn1')
-  self.d_bn2 = batch_norm(name='d_bn2')
+    self.c_dim = c_dim
 
-  if not self.y_dim:
-    self.d_bn3 = batch_norm(name='d_bn3')
+    # batch normalization : deals with poor initialization helps gradient flow
+    self.d_bn1 = batch_norm(name='d_bn1')
+    self.d_bn2 = batch_norm(name='d_bn2')
 
-  self.g_bn0 = batch_norm(name='g_bn0')
-  self.g_bn1 = batch_norm(name='g_bn1')
-  self.g_bn2 = batch_norm(name='g_bn2')
+    if not self.y_dim:
+      self.d_bn3 = batch_norm(name='d_bn3')
 
-  if not self.y_dim:
-    self.g_bn3 = batch_norm(name='g_bn3')
+    self.g_bn0 = batch_norm(name='g_bn0')
+    self.g_bn1 = batch_norm(name='g_bn1')
+    self.g_bn2 = batch_norm(name='g_bn2')
 
-  self.dataset_name = dataset_name
-  self.input_fname_pattern = input_fname_pattern
-  self.checkpoint_dir = checkpoint_dir
-  self.build_model()
+    if not self.y_dim:
+      self.g_bn3 = batch_norm(name='g_bn3')
+
+    self.dataset_name = dataset_name
+    self.input_fname_pattern = input_fname_pattern
+    self.checkpoint_dir = checkpoint_dir
+    self.build_model()
 
   def build_model(self):
     if self.y_dim:
