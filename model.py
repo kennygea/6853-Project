@@ -134,17 +134,14 @@ class DCGAN(object):
       f_left_shift = tf.concat(0, [tf.ones((1,),dtype=tf.float64), tf.slice(f, (0,), (self.T-1,))])
 
       final_x = tf.cast(f_left_shift - f, tf.float32)
-
-      G_packed = tf.pack(G)
-      print(final_x.get_shape())
-      print(G_packed.get_shape())
-
-      activated = tf.multiply(G_packed, final_x)
-
-      print(activated)
+      activated = []
+      final_x = tf.unpack(final_x)
+      for i in range(self.T):
+        activated.append(tf.multiply(G[i], final_x[i]))
+      activated = tf.pack(activated)
 
       self.G = tf.reduce_sum(activated, axis=0)
-      
+      print(self.G.get_shape())
       self.D, self.D_logits = \
       self.discriminator(inputs, self.y, reuse=False)
       self.sampler = self.sampler(self.z, self.y)
@@ -357,6 +354,7 @@ class DCGAN(object):
               .astype(np.float32)
 
         h = sp.random.uniform(0,1)
+        h = np.float64(h)
         if config.dataset == 'mnist':
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
@@ -379,20 +377,23 @@ class DCGAN(object):
 
           # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
           _, summary_str = self.sess.run([g_optim, self.g_sum],
-            feed_dict={ self.z: batch_z, self.y:batch_labels })
+            feed_dict={ self.z: batch_z, self.y:batch_labels, self.h: h })
           self.writer.add_summary(summary_str, counter)
           
           errD_fake = self.d_loss_fake.eval({
               self.z: batch_z, 
-              self.y:batch_labels
+              self.y:batch_labels,
+              self.h: h
           })
           errD_real = self.d_loss_real.eval({
               self.inputs: batch_images,
-              self.y:batch_labels
+              self.y:batch_labels,
+              self.h: h
           })
           errG = self.g_loss.eval({
               self.z: batch_z,
-              self.y: batch_labels
+              self.y: batch_labels,
+              self.h: h
           })
         else:
           # Update D network
@@ -427,6 +428,7 @@ class DCGAN(object):
                   self.z: sample_z,
                   self.inputs: sample_inputs,
                   self.y:sample_labels,
+                  self.h: h
               }
             )
             manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
