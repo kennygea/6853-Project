@@ -115,24 +115,23 @@ class DCGAN(object):
             m = difference
           else:
             m = tf.minimum(difference, m)
-      d = tf.reduce_min(m)
-
-      self.D, self.D_logits = \
-          self.discriminator(inputs, self.y, reuse=False)
-      self.sampler = self.sampler(self.z, self.y)
 
       weights = []
       for i in range(self.T):
         if i == 0:
-          weights.append(self.f_activator(inputs, G[i], d))
+          weights.append(self.f_activator(inputs, G[i], m))
         else:
-          weights.append(self.f_activator(inputs, G[i], d, reuse=True))
+          weights.append(self.f_activator(inputs, G[i], m, reuse=True))
 
       for i in range(self.T):
         if i == 0:
           self.G = tf.multiply(G[i], weights[i])
         else:
           self.G = tf.add(self.G, tf.multiply(self.G[i], weights[i]))
+
+      self.D, self.D_logits = \
+          self.discriminator(inputs, self.y, reuse=False)
+      self.sampler = self.sampler(self.z, self.y)
 
       D = []
       for i in range(self.T):
