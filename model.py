@@ -10,7 +10,7 @@ from six.moves import xrange
 from ops import *
 from utils import *
 
-def conv_out_size_same(size, stride):
+def conv_out_size_same(size, stride):   
   return int(math.ceil(float(size) / float(stride)))
 
 class DCGAN(object):
@@ -20,7 +20,6 @@ class DCGAN(object):
          gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
          input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None):
     """
-
     Args:
       sess: TensorFlow session
       batch_size: The size of batch. Should be specified before training.
@@ -110,43 +109,25 @@ class DCGAN(object):
       # self.G_five = self.generator(self.z, self.y, reuse=True)
 
       for i in range(self.T-1):
-        self.sum_a = tf.add(G[i], G[i+1])
-      # self.sum_a = tf.add(self.G_one, self.G_two)
-      # self.sum_a = tf.add(self.sum_a, self.G_three)
-      # self.sum_a = tf.add(self.sum_a, self.G_four)
-      # self.sum_a = tf.add(self.sum_a, self.G_five)
+        for j in range(i+1, self.T):
+          difference = tf.abs(tf.subtract(G[i], G[j]))
+          if i == 0 and j == 1:
+            m = difference
+          else:
+            m = tf.minimum(difference, m)
+
       weights = []
       for i in range(self.T):
-        weights.append(tf.divide(G[i], self.sum_a))
-      # self.weight_one = tf.divide(self.G_one, self.sum_a)
-      # self.weight_two = tf.divide(self.G_two, self.sum_a)
-      # self.weight_three = tf.divide(self.G_three, self.sum_a)
-      # self.weight_four = tf.divide(self.G_four, self.sum_a)
-      # self.weight_five = tf.divide(self.G_five, self.sum_a)
-
-      for i in range(self.T-1):
         if i == 0:
-          compare = tf.greater_equal(weights[i], weights[i+1])
-          intermediate_weights = tf.where(compare, weights[i], weights[i+1])
-          self.G = tf.where(compare, G[i], G[i+1])
+          weights.append(self.f_activator(inputs, G[i], m))
         else:
-          compare = tf.greater_equal(intermediate_weights, weights[i+1])
-          intermediate_weights = tf.where(compare, intermediate_weights, weights[i+1])
-          self.G = tf.where(compare, self.G, weights[i+1])
+          weights.append(self.f_activator(inputs, G[i], m, reuse=True))
 
-
-      # self.compare = tf.greater_equal(self.weight_one, self.weight_two)
-      # self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
-      # self.G = tf.where(self.compare, self.G_one, self.G_two)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_three)
-      # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_three)
-      # self.G = tf.where(self.compare, self.G, self.G_three)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_four)
-      # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_four)
-      # self.G = tf.where(self.compare, self.G, self.G_four)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_five)
-      # self.G = tf.where(self.compare, self.G, self.G_five)
-
+      for i in range(self.T):
+        if i == 0:
+          self.G = tf.multiply(G[i], weights[i])
+        else:
+          self.G = tf.add(self.G, tf.multiply(self.G[i], weights[i]))
 
       self.D, self.D_logits = \
           self.discriminator(inputs, self.y, reuse=False)
@@ -192,9 +173,19 @@ class DCGAN(object):
       # self.sum_a = tf.add(self.sum_a, self.G_three)
       # self.sum_a = tf.add(self.sum_a, self.G_four)
       # self.sum_a = tf.add(self.sum_a, self.G_five)
+      alpha = []
+      for i in range(self.T):
+        if i == 0:
+          alpha.append(alpha())
+        else:
+          alpha.append(alpha(reuse=True))
+
       weights = []
       for i in range(self.T):
-        weights.append(tf.divide(G[i], self.sum_a))
+        weights.append(tf.exp(alpha[i]))
+
+
+
       # self.weight_one = tf.divide(self.G_one, self.sum_a)
       # self.weight_two = tf.divide(self.G_two, self.sum_a)
       # self.weight_three = tf.divide(self.G_three, self.sum_a)
@@ -209,7 +200,7 @@ class DCGAN(object):
         else:
           compare = tf.greater_equal(intermediate_weights, weights[i+1])
           intermediate_weights = tf.where(compare, intermediate_weights, weights[i+1])
-          self.G = tf.where(compare, self.G, weights[i+1])
+          self.G = tf.where(compare, self.G, G[i+1])
 
 
       # self.compare = tf.greater_equal(self.weight_one, self.weight_two)
@@ -376,6 +367,7 @@ class DCGAN(object):
           # Update G network
           _, summary_str = self.sess.run([g_optim, self.g_sum],
             feed_dict={
+              self.inputs: batch_images,
               self.z: batch_z, 
               self.y:batch_labels,
             })
@@ -457,6 +449,13 @@ class DCGAN(object):
 
         if np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
+
+  def f_activator(self, image, v_i, d, reuse=False):
+    with tf.variable_scope("activator") as scope:
+      if reuse:
+        scope.reuse_variables()
+      return tf.subtract(tf.maximum(tf.divide(tf.subtract(image, tf.subtract(tf.cast(v_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
+        tf.maximum(tf.divide(tf.subtract(image, tf.add(tf.cast(v_i, tf.float32), tf.divide(d, 2.0))), d), 0))
 
   def discriminator(self, image, y=None, reuse=False):
     with tf.variable_scope("discriminator") as scope:
