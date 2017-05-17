@@ -11,48 +11,48 @@ from ops import *
 from utils import *
 
 def conv_out_size_same(size, stride):   
-    self.T = 5
-    self.sess = sess
-    self.is_crop = is_crop
-    self.is_grayscale = (c_dim == 1)
+  self.T = 5
+  self.sess = sess
+  self.is_crop = is_crop
+  self.is_grayscale = (c_dim == 1)
 
-    self.batch_size = batch_size
-    self.sample_num = sample_num
+  self.batch_size = batch_size
+  self.sample_num = sample_num
 
-    self.input_height = input_height
-    self.input_width = input_width
-    self.output_height = output_height
-    self.output_width = output_width
+  self.input_height = input_height
+  self.input_width = input_width
+  self.output_height = output_height
+  self.output_width = output_width
 
-    self.y_dim = y_dim
-    self.z_dim = z_dim
+  self.y_dim = y_dim
+  self.z_dim = z_dim
 
-    self.gf_dim = gf_dim
-    self.df_dim = df_dim
+  self.gf_dim = gf_dim
+  self.df_dim = df_dim
 
-    self.gfc_dim = gfc_dim
-    self.dfc_dim = dfc_dim
+  self.gfc_dim = gfc_dim
+  self.dfc_dim = dfc_dim
 
-    self.c_dim = c_dim
+  self.c_dim = c_dim
 
-    # batch normalization : deals with poor initialization helps gradient flow
-    self.d_bn1 = batch_norm(name='d_bn1')
-    self.d_bn2 = batch_norm(name='d_bn2')
+  # batch normalization : deals with poor initialization helps gradient flow
+  self.d_bn1 = batch_norm(name='d_bn1')
+  self.d_bn2 = batch_norm(name='d_bn2')
 
-    if not self.y_dim:
-      self.d_bn3 = batch_norm(name='d_bn3')
+  if not self.y_dim:
+    self.d_bn3 = batch_norm(name='d_bn3')
 
-    self.g_bn0 = batch_norm(name='g_bn0')
-    self.g_bn1 = batch_norm(name='g_bn1')
-    self.g_bn2 = batch_norm(name='g_bn2')
+  self.g_bn0 = batch_norm(name='g_bn0')
+  self.g_bn1 = batch_norm(name='g_bn1')
+  self.g_bn2 = batch_norm(name='g_bn2')
 
-    if not self.y_dim:
-      self.g_bn3 = batch_norm(name='g_bn3')
+  if not self.y_dim:
+    self.g_bn3 = batch_norm(name='g_bn3')
 
-    self.dataset_name = dataset_name
-    self.input_fname_pattern = input_fname_pattern
-    self.checkpoint_dir = checkpoint_dir
-    self.build_model()
+  self.dataset_name = dataset_name
+  self.input_fname_pattern = input_fname_pattern
+  self.checkpoint_dir = checkpoint_dir
+  self.build_model()
 
   def build_model(self):
     if self.y_dim:
