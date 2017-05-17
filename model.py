@@ -162,7 +162,7 @@ class DCGAN(object):
         D.append(tf.multiply(d, self.probs_d[i]))
         DL.append(tf.multiply(dl, self.probs_d[i]))
    
-      self.D_logits_ = tf.divide(tf.add_n(DL), self.T)
+      self.D_logits_ = tf.add_n(DL)
       self.D_ = tf.add_n(D)
 
     else:
