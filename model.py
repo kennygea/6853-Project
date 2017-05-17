@@ -121,9 +121,9 @@ class DCGAN(object):
       for a in alphas:
         weights.append(tf.exp(a))
         
-      probs = [weights[i]/sum(weights) for i in range(self.T)]
+      self.probs = [weights[i]/sum(weights) for i in range(self.T)]
 
-      z = tf.pack([sum(probs[:i+1]) for i in range(self.T)])
+      z = tf.pack([sum(self.probs[:i+1]) for i in range(self.T)])
       z = tf.cast(z, tf.float64)
       inputs_minus_delta = (tf.ones((self.T,),dtype=tf.float64) *self.h - z - self.delta/2)/self.delta
       inputs_plus_delta = (tf.ones((self.T,),dtype=tf.float64) *self.h - z + self.delta/2)/self.delta
@@ -149,7 +149,9 @@ class DCGAN(object):
       weights_d = []
       for a in alphas_d:
         weights_d.append(tf.exp(a))
-      probs_d = [weights_d[i]/sum(weights_d) for i in range(self.T)] 
+
+      self.probs_d = [weights_d[i]/sum(weights_d) for i in range(self.T)] 
+
       self.D, self.D_logits = \
       self.discriminator(inputs, self.y, reuse=False)
       self.sampler = self.sampler(self.z, self.y)
@@ -157,10 +159,10 @@ class DCGAN(object):
       DL = []
       for i in range(self.T):
         d, dl = self.discriminator(self.G, self.y, reuse=True)
-        D.append(tf.multiply(d, probs_d[i]))
-        DL.append(tf.multiply(dl, probs_d[i]))
+        D.append(tf.multiply(d, self.probs_d[i]))
+        DL.append(tf.multiply(dl, self.probs_d[i]))
    
-      self.D_logits_ = tf.divide(tf.add_n(D), self.T)
+      self.D_logits_ = tf.divide(tf.add_n(DL), self.T)
       self.D_ = tf.add_n(D)
 
     else:
@@ -269,8 +271,17 @@ class DCGAN(object):
 
     self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
     self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
-                          
-    self.d_loss = self.d_loss_real + self.d_loss_fake
+
+    for i in range(self.T):
+      term = tf.log(self.probs[i]) + tf.log(self.probs_d[i])
+      i == 0:
+        self.r_ent = term
+      else:
+        self.r_ent = tf.add(self.r_ent, term)
+
+    self.r_ent = tf.divide(self.r_ent, self.T)
+    self.g_loss = self.g_loss + self.r_ent
+    self.d_loss = self.d_loss_real + self.d_loss_fake + self.r_ent
 
     self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
     self.d_loss_sum = scalar_summary("d_loss", self.d_loss)
