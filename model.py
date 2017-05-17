@@ -121,17 +121,17 @@ class DCGAN(object):
       for a in alphas:
         weights.append(tf.exp(a))
         
-      probs = [weights[i]/sum(weights) for i in range(T)]
+      probs = [weights[i]/sum(weights) for i in range(self.T)]
 
-      z = tf.pack([sum(probs[:i+1]) for i in range(T)])
+      z = tf.pack([sum(probs[:i+1]) for i in range(self.T)])
+      z = tf.cast(z, tf.float64)
+      inputs_minus_delta = (tf.ones((self.T,),dtype=tf.float64) *self.h - z - self.delta/2)/self.delta
+      inputs_plus_delta = (tf.ones((self.T,),dtype=tf.float64) *self.h - z + self.delta/2)/self.delta
 
-      inputs_minus_delta = (tf.ones((T,),dtype=tf.float64) * h - z - delta/2)/delta
-      inputs_plus_delta = (tf.ones((T,),dtype=tf.float64) * h - z + delta/2)/delta
+      f = tf.sigmoid(inputs_plus_delta * self.sigmoid_multiplier) * inputs_plus_delta - \
+          tf.sigmoid(inputs_minus_delta * self.sigmoid_multiplier) * inputs_minus_delta    
 
-      f = tf.sigmoid(inputs_plus_delta * sigmoid_multiplier) * inputs_plus_delta - \
-          tf.sigmoid(inputs_minus_delta * sigmoid_multiplier) * inputs_minus_delta    
-
-      f_left_shift = tf.concat(0, [tf.ones((1,),dtype=tf.float64), tf.slice(f, (0,), (T-1,))])
+      f_left_shift = tf.concat(0, [tf.ones((1,),dtype=tf.float64), tf.slice(f, (0,), (self.T-1,))])
 
       final_x = tf.cast(f_left_shift - f, tf.float32)
 
@@ -139,10 +139,10 @@ class DCGAN(object):
 
       activated = tf.multiply(G_packed, final_x)
 
-      self.G = tf.add_n(activated)
+      self.G = tf.reduce_sum(activated, axis=0)
 
       self.D, self.D_logits = \
-          self.discriminator(inputs, self.y, reuse=False)
+      self.discriminator(inputs, self.y, reuse=False)
       self.sampler = self.sampler(self.z, self.y)
       D = []
       for i in range(self.T):
@@ -152,6 +152,7 @@ class DCGAN(object):
       self.D_ = tf.divide(tf.add_n(D), self.T)
 
     else:
+      print("hi")
       # G = []
       # for i in range(self.T):
       #   if i == 0:
@@ -454,7 +455,7 @@ class DCGAN(object):
       with tf.variable_scope("alpha") as scope:
         if reuse:
           scope.reuse_variables()
-        alpha = tf.variable(1/self.T, name= 'g_alpha_' + i)
+        alpha = tf.Variable(1/self.T, name= 'g_alpha_' + i)
         return alpha
 
   def discriminator(self, image, y=None, reuse=False):
