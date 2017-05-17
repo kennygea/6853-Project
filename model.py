@@ -144,7 +144,7 @@ class DCGAN(object):
       print(activated)
 
       self.G = tf.reduce_sum(activated, axis=0)
-      print(G)
+      self.G = tf.reshape(self.G, [self.batch_size, self.output_height, self.output_width, self.c_dim])
 
       self.D, self.D_logits = \
       self.discriminator(inputs, self.y, reuse=False)
@@ -358,7 +358,7 @@ class DCGAN(object):
               .astype(np.float32)
 
         h = sp.random.uniform(0,1)
-
+        h = np.double(h)
         if config.dataset == 'mnist':
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
