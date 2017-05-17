@@ -120,9 +120,11 @@ class DCGAN(object):
       weights = []
       for i in range(self.T):
         if i == 0:
-          weights.append(self.f_activation(i, d, False))
+          weights.append(tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
+            tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0)))
         else:
-          weights.append(self.f_activation(i, d, True))
+          weights.append(tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
+            tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0)))
 
       for i in range(self.T):
         if i == 0:
@@ -450,13 +452,6 @@ class DCGAN(object):
 
         if np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
-
-  def f_activation(self, z_i, d, reuse=False):
-    with tf.variable_scope("activator") as scope:
-      if reuse:
-        scope.reuse_variables()
-      return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
-        tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0))
 
   def discriminator(self, image, y=None, reuse=False):
     with tf.variable_scope("discriminator") as scope:
