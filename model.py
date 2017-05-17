@@ -71,8 +71,8 @@ class DCGAN(object):
 
     self.dataset_name = dataset_name
     self.input_fname_pattern = input_fname_pattern
-    self.checkpoint_dir = checkpoint_dir
-    self.build_model()
+    self.checkpoint_dir = checkpoint_di
+r    self.build_model()
 
   def build_model(self):
     if self.y_dim:
@@ -455,8 +455,8 @@ class DCGAN(object):
     with tf.variable_scope("activator") as scope:
       if reuse:
         scope.reuse_variable()
-      return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(z_i, tf.divide(d, 2.0))), d), 0), \
-        tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(z_i, tf.divide(d, 2.0))), d), 0))
+      return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
+        tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(tf.cast(z_i, tf.float32), tf.divide(d, 2.0))), d), 0))
 
   def discriminator(self, image, y=None, reuse=False):
     with tf.variable_scope("discriminator") as scope:
