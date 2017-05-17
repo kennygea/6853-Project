@@ -146,7 +146,7 @@ class DCGAN(object):
       self.D_ = tf.divide(tf.add_n(self.D_one, self.D_two, self.D_three, self.D_four, self.D_five), self.T)
 
     else:
-            self.G_one = self.generator(self.z)
+      self.G_one = self.generator(self.z)
       self.G_two = self.generator(self.z, reuse=True)
       self.G_three = self.generator(self.z, reuse=True)
       self.G_four = self.generator(self.z, reuse=True)
