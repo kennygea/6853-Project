@@ -124,10 +124,10 @@ class DCGAN(object):
       # self.weight_four = tf.divide(self.G_four, self.sum_a)
       # self.weight_five = tf.divide(self.G_five, self.sum_a)
 
-      for i in range(T-1):
+      for i in range(self.T-1):
         if i == 0:
           compare = tf.greater_equal(weights[i], weights[i+1])
-          intermediate_weights = tf.where(compare, weights[i], self.weights[i+1])
+          intermediate_weights = tf.where(compare, weights[i], weights[i+1])
           self.G = tf.where(compare, G[i], G[i+1])
         else:
           compare = tf.greater_equal(intermediate_weights, weights[i+1])
@@ -179,7 +179,7 @@ class DCGAN(object):
         if i == 0:
           G.append(self.generator(self.z))
         else:
-          G.append(self.generator(self.z reuse=True))
+          G.append(self.generator(self.z, reuse=True))
       # self.G_one = self.generator(self.z)
       # self.G_two = self.generator(self.z, reuse=True)
       # self.G_three = self.generator(self.z, reuse=True)
@@ -201,10 +201,10 @@ class DCGAN(object):
       # self.weight_four = tf.divide(self.G_four, self.sum_a)
       # self.weight_five = tf.divide(self.G_five, self.sum_a)
 
-      for i in range(T-1):
+      for i in range(self.T-1):
         if i == 0:
           compare = tf.greater_equal(weights[i], weights[i+1])
-          intermediate_weights = tf.where(compare, weights[i], self.weights[i+1])
+          intermediate_weights = tf.where(compare, weights[i], weights[i+1])
           self.G = tf.where(compare, G[i], G[i+1])
         else:
           compare = tf.greater_equal(intermediate_weights, weights[i+1])
