@@ -108,10 +108,6 @@ class DCGAN(object):
       # self.G_four = self.generator(self.z, self.y, reuse=True)
       # self.G_five = self.generator(self.z, self.y, reuse=True)
 
-      def f_activation(z_i, d):
-        return tf.subtract(tf.maximum(tf.divide(tf.subtract(inputs, tf.subtract(z_i, d/2.0)), d), 0), \
-          tf.maximum(tf.divide(tf.subtract(inputs, tf.add(z_i, d/2.0)), d), 0))
-
       for i in range(self.T-1):
         for j in range(i+1, self.T):
           difference = tf.abs(tf.subtract(G[i], G[j]))
@@ -123,7 +119,7 @@ class DCGAN(object):
 
       weights = []
       for i in G:
-        weights.append(f_activation(i, d))
+        weights.append(self.f_activation(i, d))
 
       for i in range(self.T):
         if i == 0:
@@ -274,6 +270,10 @@ class DCGAN(object):
     self.g_vars = [var for var in t_vars if 'g_' in var.name]
 
     self.saver = tf.train.Saver()
+
+  def f_activation(self, z_i, d):
+    return tf.subtract(tf.maximum(tf.divide(tf.subtract(self.inputs, tf.subtract(z_i, d/2.0)), d), 0), \
+      tf.maximum(tf.divide(tf.subtract(self.inputs, tf.add(z_i, d/2.0)), d), 0))
 
   def train(self, config):
     """Train DCGAN"""
