@@ -124,9 +124,9 @@ class DCGAN(object):
       weights = []
       for i in range(self.T):
         if i == 0:
-          weights.append(f_activator(inputs, G[i], d))
+          weights.append(self.f_activator(inputs, G[i], d))
         else:
-          weights.append(f_activator(inputs, G[i], d, reuse=True))
+          weights.append(self.f_activator(inputs, G[i], d, reuse=True))
 
       for i in range(self.T):
         if i == 0:
@@ -454,7 +454,7 @@ class DCGAN(object):
     with tf.variable_scope("activator") as scope:
       if reuse:
         scope.reuse_variables()
-        
+
       return tf.subtract(tf.maximum(tf.divide(tf.subtract(image, tf.subtract(tf.cast(v_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
         tf.maximum(tf.divide(tf.subtract(image, tf.add(tf.cast(v_i, tf.float32), tf.divide(d, 2.0))), d), 0))
 
