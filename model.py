@@ -6,6 +6,7 @@ from glob import glob
 import tensorflow as tf
 import numpy as np
 from six.moves import xrange
+import scipy as sp
 
 from ops import *
 from utils import *
@@ -32,6 +33,8 @@ class DCGAN(object):
       c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
     """
     self.T = 5
+    self.delta = float(1e-7)
+    self.sigmoid_multiplier = float(1e7)
     self.sess = sess
     self.is_crop = is_crop
     self.is_grayscale = (c_dim == 1)
@@ -95,6 +98,8 @@ class DCGAN(object):
       tf.float32, [None, self.z_dim], name='z')
     self.z_sum = histogram_summary("z", self.z)
 
+    self.h = tf.placeholder(tf.float64, name="h")
+
     if self.y_dim:
       G = []
       for i in range(self.T):
@@ -108,134 +113,126 @@ class DCGAN(object):
       # self.G_four = self.generator(self.z, self.y, reuse=True)
       # self.G_five = self.generator(self.z, self.y, reuse=True)
 
-      for i in range(self.T-1):
-        for j in range(i+1, self.T):
-          difference = tf.abs(tf.subtract(G[i], G[j]))
-          if i == 0 and j == 1:
-            m = difference
-          else:
-            m = tf.minimum(difference, m)
+      alphas = []
+      for i in range(self.T):
+          alphas.append(self.alpha(i))
 
       weights = []
-      for i in range(self.T):
-        if i == 0:
-          weights.append(self.f_activator(inputs, G[i], m))
-        else:
-          weights.append(self.f_activator(inputs, G[i], m, reuse=True))
+      for a in alphas:
+        weights.append(tf.exp(a))
+        
+      probs = [weights[i]/sum(weights) for i in range(T)]
 
-      for i in range(self.T):
-        if i == 0:
-          self.G = tf.multiply(G[i], weights[i])
-        else:
-          self.G = tf.add(self.G, tf.multiply(self.G[i], weights[i]))
+      z = tf.pack([sum(probs[:i+1]) for i in range(T)])
+
+      inputs_minus_delta = (tf.ones((T,),dtype=tf.float64) * h - z - delta/2)/delta
+      inputs_plus_delta = (tf.ones((T,),dtype=tf.float64) * h - z + delta/2)/delta
+
+      f = tf.sigmoid(inputs_plus_delta * sigmoid_multiplier) * inputs_plus_delta - \
+          tf.sigmoid(inputs_minus_delta * sigmoid_multiplier) * inputs_minus_delta    
+
+      f_left_shift = tf.concat(0, [tf.ones((1,),dtype=tf.float64), tf.slice(f, (0,), (T-1,))])
+
+      final_x = tf.cast(f_left_shift - f, tf.float32)
+
+      G_packed = tf.pack(G)
+
+      activated = tf.multiply(G_packed, final_x)
+
+      self.G = tf.add_n(activated)
 
       self.D, self.D_logits = \
           self.discriminator(inputs, self.y, reuse=False)
       self.sampler = self.sampler(self.z, self.y)
-
       D = []
       for i in range(self.T):
         D.append(self.discriminator(self.G, self.y, reuse=True))
-      # self.D_one, self.D_logits_one = \
-      #     self.discriminator(self.G, self.y, reuse=True)
-      # self.D_two, self.D_logits_two = \
-      #     self.discriminator(self.G, self.y, reuse=True)     
-      # self.D_three, self.D_logits_three = \
-      #     self.discriminator(self.G, self.y, reuse=True)
-      # self.D_four, self.D_logits_four = \
-      #     self.discriminator(self.G, self.y, reuse=True)   
-      # self.D_five, self.D_logits_five = \
-      #     self.discriminator(self.G, self.y, reuse=True)      
-
-
+   
       self.D_logits_ = tf.divide(tf.add_n(D), self.T)
       self.D_ = tf.divide(tf.add_n(D), self.T)
-
-      # self.D_logits_ = tf.divide(tf.add_n([self.D_logits_one, self.D_logits_two, self.D_logits_three, self.D_logits_four, self.D_logits_five]), self.T)
-      # self.D_ = tf.divide(tf.add_n(self.D_one, self.D_two, self.D_three, self.D_four, self.D_five), self.T)
 
     else:
-      G = []
-      for i in range(self.T):
-        if i == 0:
-          G.append(self.generator(self.z))
-        else:
-          G.append(self.generator(self.z, reuse=True))
-      # self.G_one = self.generator(self.z)
-      # self.G_two = self.generator(self.z, reuse=True)
-      # self.G_three = self.generator(self.z, reuse=True)
-      # self.G_four = self.generator(self.z, reuse=True)
-      # self.G_five = self.generator(self.z, reuse=True)
+      # G = []
+      # for i in range(self.T):
+      #   if i == 0:
+      #     G.append(self.generator(self.z))
+      #   else:
+      #     G.append(self.generator(self.z, reuse=True))
+      # # self.G_one = self.generator(self.z)
+      # # self.G_two = self.generator(self.z, reuse=True)
+      # # self.G_three = self.generator(self.z, reuse=True)
+      # # self.G_four = self.generator(self.z, reuse=True)
+      # # self.G_five = self.generator(self.z, reuse=True)
 
-      for i in range(self.T-1):
-        self.sum_a = tf.add(G[i], G[i+1])
-      # self.sum_a = tf.add(self.G_one, self.G_two)
-      # self.sum_a = tf.add(self.sum_a, self.G_three)
-      # self.sum_a = tf.add(self.sum_a, self.G_four)
-      # self.sum_a = tf.add(self.sum_a, self.G_five)
-      alpha = []
-      for i in range(self.T):
-        if i == 0:
-          alpha.append(alpha())
-        else:
-          alpha.append(alpha(reuse=True))
+      # for i in range(self.T-1):
+      #   self.sum_a = tf.add(G[i], G[i+1])
+      # # self.sum_a = tf.add(self.G_one, self.G_two)
+      # # self.sum_a = tf.add(self.sum_a, self.G_three)
+      # # self.sum_a = tf.add(self.sum_a, self.G_four)
+      # # self.sum_a = tf.add(self.sum_a, self.G_five)
+      # alpha = []
+      # for i in range(self.T):
+      #   if i == 0:
+      #     alpha.append(alpha())
+      #   else:
+      #     alpha.append(alpha(reuse=True))
 
-      weights = []
-      for i in range(self.T):
-        weights.append(tf.exp(alpha[i]))
-
-
-
-      # self.weight_one = tf.divide(self.G_one, self.sum_a)
-      # self.weight_two = tf.divide(self.G_two, self.sum_a)
-      # self.weight_three = tf.divide(self.G_three, self.sum_a)
-      # self.weight_four = tf.divide(self.G_four, self.sum_a)
-      # self.weight_five = tf.divide(self.G_five, self.sum_a)
-
-      for i in range(self.T-1):
-        if i == 0:
-          compare = tf.greater_equal(weights[i], weights[i+1])
-          intermediate_weights = tf.where(compare, weights[i], weights[i+1])
-          self.G = tf.where(compare, G[i], G[i+1])
-        else:
-          compare = tf.greater_equal(intermediate_weights, weights[i+1])
-          intermediate_weights = tf.where(compare, intermediate_weights, weights[i+1])
-          self.G = tf.where(compare, self.G, G[i+1])
+      # weights = []
+      # for i in range(self.T):
+      #   weights.append(tf.exp(alpha[i]))
 
 
-      # self.compare = tf.greater_equal(self.weight_one, self.weight_two)
-      # self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
-      # self.G = tf.where(self.compare, self.G_one, self.G_two)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_three)
-      # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_three)
-      # self.G = tf.where(self.compare, self.G, self.G_three)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_four)
-      # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_four)
-      # self.G = tf.where(self.compare, self.G, self.G_four)
-      # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_five)
-      # self.G = tf.where(self.compare, self.G, self.G_five)
+
+      # # self.weight_one = tf.divide(self.G_one, self.sum_a)
+      # # self.weight_two = tf.divide(self.G_two, self.sum_a)
+      # # self.weight_three = tf.divide(self.G_three, self.sum_a)
+      # # self.weight_four = tf.divide(self.G_four, self.sum_a)
+      # # self.weight_five = tf.divide(self.G_five, self.sum_a)
+
+      # for i in range(self.T-1):
+      #   if i == 0:
+      #     compare = tf.greater_equal(weights[i], weights[i+1])
+      #     intermediate_weights = tf.where(compare, weights[i], weights[i+1])
+      #     self.G = tf.where(compare, G[i], G[i+1])
+      #   else:
+      #     compare = tf.greater_equal(intermediate_weights, weights[i+1])
+      #     intermediate_weights = tf.where(compare, intermediate_weights, weights[i+1])
+      #     self.G = tf.where(compare, self.G, G[i+1])
 
 
-      self.D, self.D_logits = \
-          self.discriminator(inputs, reuse=False)
-      self.sampler = self.sampler(self.z)
+      # # self.compare = tf.greater_equal(self.weight_one, self.weight_two)
+      # # self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
+      # # self.G = tf.where(self.compare, self.G_one, self.G_two)
+      # # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_three)
+      # # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_three)
+      # # self.G = tf.where(self.compare, self.G, self.G_three)
+      # # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_four)
+      # # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_four)
+      # # self.G = tf.where(self.compare, self.G, self.G_four)
+      # # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_five)
+      # # self.G = tf.where(self.compare, self.G, self.G_five)
 
-      D = []
-      for i in range(self.T):
-        D.append(self.discriminator(self.G, reuse=True))
-      # self.D_one, self.D_logits_one = \
-      #     self.discriminator(self.G, reuse=True)
-      # self.D_two, self.D_logits_two = \
-      #     self.discriminator(self.G, reuse=True)     
-      # self.D_three, self.D_logits_three = \
-      #     self.discriminator(self.G, reuse=True)
-      # self.D_four, self.D_logits_four = \
-      #     self.discriminator(self.G, reuse=True)   
-      # self.D_five, self.D_logits_five = \
-      #     self.discriminator(self.G, reuse=True)      
 
-      self.D_logits_ = tf.divide(tf.add_n(D), self.T)
-      self.D_ = tf.divide(tf.add_n(D), self.T)
+      # self.D, self.D_logits = \
+      #     self.discriminator(inputs, reuse=False)
+      # self.sampler = self.sampler(self.z)
+
+      # D = []
+      # for i in range(self.T):
+      #   D.append(self.discriminator(self.G, reuse=True))
+      # # self.D_one, self.D_logits_one = \
+      # #     self.discriminator(self.G, reuse=True)
+      # # self.D_two, self.D_logits_two = \
+      # #     self.discriminator(self.G, reuse=True)     
+      # # self.D_three, self.D_logits_three = \
+      # #     self.discriminator(self.G, reuse=True)
+      # # self.D_four, self.D_logits_four = \
+      # #     self.discriminator(self.G, reuse=True)   
+      # # self.D_five, self.D_logits_five = \
+      # #     self.discriminator(self.G, reuse=True)      
+
+      # self.D_logits_ = tf.divide(tf.add_n(D), self.T)
+      # self.D_ = tf.divide(tf.add_n(D), self.T)
 
       # self.D_logits_ = tf.divide(tf.add_n([self.D_logits_one, self.D_logits_two, self.D_logits_three, self.D_logits_four, self.D_logits_five]), self.T)
       # self.D_ = tf.divide(tf.add_n(self.D_one, self.D_two, self.D_three, self.D_four, self.D_five), self.T)
@@ -354,6 +351,8 @@ class DCGAN(object):
         batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
               .astype(np.float32)
 
+        h = sp.random.uniform(0,1)
+
         if config.dataset == 'mnist':
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
@@ -367,9 +366,9 @@ class DCGAN(object):
           # Update G network
           _, summary_str = self.sess.run([g_optim, self.g_sum],
             feed_dict={
-              self.inputs: batch_images,
               self.z: batch_z, 
               self.y:batch_labels,
+              self.h: h
             })
           self.writer.add_summary(summary_str, counter)
 
@@ -450,12 +449,13 @@ class DCGAN(object):
         if np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
 
-  def f_activator(self, image, v_i, d, reuse=False):
-    with tf.variable_scope("activator") as scope:
-      if reuse:
-        scope.reuse_variables()
-      return tf.subtract(tf.maximum(tf.divide(tf.subtract(image, tf.subtract(tf.cast(v_i, tf.float32), tf.divide(d, 2.0))), d), 0), \
-        tf.maximum(tf.divide(tf.subtract(image, tf.add(tf.cast(v_i, tf.float32), tf.divide(d, 2.0))), d), 0))
+  def alpha(self, i, reuse=False):
+      i = str(i)
+      with tf.variable_scope("alpha") as scope:
+        if reuse:
+          scope.reuse_variables()
+        alpha = tf.variable(1/self.T, name= 'g_alpha_' + i)
+        return alpha
 
   def discriminator(self, image, y=None, reuse=False):
     with tf.variable_scope("discriminator") as scope:
