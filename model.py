@@ -274,14 +274,14 @@ class DCGAN(object):
 
     for i in range(self.T):
       term = tf.log(self.probs[i]) + tf.log(self.probs_d[i])
-      i == 0:
+      if i == 0:
         self.r_ent = term
       else:
         self.r_ent = tf.add(self.r_ent, term)
 
     self.r_ent = tf.divide(self.r_ent, self.T)
-    self.g_loss = self.g_loss + self.r_ent
-    self.d_loss = self.d_loss_real + self.d_loss_fake + self.r_ent
+    self.g_loss = self.g_loss - self.r_ent
+    self.d_loss = self.d_loss_real + self.d_loss_fake - self.r_ent
 
     self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
     self.d_loss_sum = scalar_summary("d_loss", self.d_loss)
