@@ -279,7 +279,7 @@ class DCGAN(object):
     if config.dataset == 'mnist':
       data_X, data_y = self.load_mnist()
       self.loss_file_writer = open('mnist_loss.txt', 'w')
-      self.weights_file_writer = open('mnist_weights.txt', 'w')
+      # self.weights_file_writer = open('mnist_weights.txt', 'w')
     else:
       data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
     #np.random.shuffle(data)
@@ -428,13 +428,13 @@ class DCGAN(object):
 
         self.loss_file_writer.write(str(errD_fake+errD_real) + ',' + str(errG) + '\n')
 
-        probs = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.probs]
-        print(probs)
+       # probs = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.probs]
+       # print(probs)
 
-        probs_d = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.probs_d]
-        print(probs_d)
+       # probs_d = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.probs_d]
+       # print(probs_d)
 
-        self.weights_file_writer.write(" ".join(probs) + ',' + " ".join(probs_d) + '\n')
+       # self.weights_file_writer.write(" ".join([str(i) for i in probs]) + ',' + " ".join([str(i) for i in probs_d]) + '\n')
 
         if np.mod(counter, 100) == 1:
           if config.dataset == 'mnist':
@@ -472,7 +472,7 @@ class DCGAN(object):
         if np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
     self.loss_file_writer.close()
-    self.weights_file_writer.close()
+    # self.weights_file_writer.close()
 
   def alpha(self, i, reuse=False):
       i = str(i)
