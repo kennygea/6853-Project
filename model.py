@@ -146,11 +146,11 @@ class DCGAN(object):
       for i in range(self.T):
         alphas_d.append(self.alpha_d(i))
 
-      weights_d = []
+      self.weights_d = []
       for a in alphas_d:
-        weights_d.append(tf.exp(a))
+        self.weights_d.append(tf.exp(a))
 
-      self.probs_d = [weights_d[i]/sum(weights_d) for i in range(self.T)] 
+      self.probs_d = [self.weights_d[i]/sum(self.weights_d) for i in range(self.T)] 
 
       self.D, self.D_logits = \
       self.discriminator(inputs, self.y, reuse=False)
@@ -165,92 +165,73 @@ class DCGAN(object):
       self.D_logits_ = tf.add_n(DL)
       self.D_ = tf.add_n(D)
 
+      ###################
     else:
-      print("hi")
-      # G = []
-      # for i in range(self.T):
-      #   if i == 0:
-      #     G.append(self.generator(self.z))
-      #   else:
-      #     G.append(self.generator(self.z, reuse=True))
-      # # self.G_one = self.generator(self.z)
-      # # self.G_two = self.generator(self.z, reuse=True)
-      # # self.G_three = self.generator(self.z, reuse=True)
-      # # self.G_four = self.generator(self.z, reuse=True)
-      # # self.G_five = self.generator(self.z, reuse=True)
+      G = []
+      for i in range(self.T):
+        if i == 0:
+          G.append(self.generator(self.z))
+        else:
+          G.append(self.generator(self.z, reuse=True))
+      # self.G_one = self.generator(self.z, self.y)
+      # self.G_two = self.generator(self.z, self.y, reuse=True)
+      # self.G_three = self.generator(self.z, self.y, reuse=True)
+      # self.G_four = self.generator(self.z, self.y, reuse=True)
+      # self.G_five = self.generator(self.z, self.y, reuse=True)
 
-      # for i in range(self.T-1):
-      #   self.sum_a = tf.add(G[i], G[i+1])
-      # # self.sum_a = tf.add(self.G_one, self.G_two)
-      # # self.sum_a = tf.add(self.sum_a, self.G_three)
-      # # self.sum_a = tf.add(self.sum_a, self.G_four)
-      # # self.sum_a = tf.add(self.sum_a, self.G_five)
-      # alpha = []
-      # for i in range(self.T):
-      #   if i == 0:
-      #     alpha.append(alpha())
-      #   else:
-      #     alpha.append(alpha(reuse=True))
+      alphas = []
+      for i in range(self.T):
+          alphas.append(self.alpha(i))
 
-      # weights = []
-      # for i in range(self.T):
-      #   weights.append(tf.exp(alpha[i]))
+      weights = []
+      for a in alphas:
+        weights.append(tf.exp(a))
+        
+      self.probs = [weights[i]/sum(weights) for i in range(self.T)]
 
+      z = tf.pack([sum(self.probs[:i+1]) for i in range(self.T)])
+      z = tf.cast(z, tf.float64)
+      inputs_minus_delta = (tf.ones((self.T,),dtype=tf.float64) *self.h - z - self.delta/2)/self.delta
+      inputs_plus_delta = (tf.ones((self.T,),dtype=tf.float64) *self.h - z + self.delta/2)/self.delta
 
+      f = tf.sigmoid(inputs_plus_delta * self.sigmoid_multiplier) * inputs_plus_delta - \
+          tf.sigmoid(inputs_minus_delta * self.sigmoid_multiplier) * inputs_minus_delta    
 
-      # # self.weight_one = tf.divide(self.G_one, self.sum_a)
-      # # self.weight_two = tf.divide(self.G_two, self.sum_a)
-      # # self.weight_three = tf.divide(self.G_three, self.sum_a)
-      # # self.weight_four = tf.divide(self.G_four, self.sum_a)
-      # # self.weight_five = tf.divide(self.G_five, self.sum_a)
+      f_left_shift = tf.concat(0, [tf.ones((1,),dtype=tf.float64), tf.slice(f, (0,), (self.T-1,))])
 
-      # for i in range(self.T-1):
-      #   if i == 0:
-      #     compare = tf.greater_equal(weights[i], weights[i+1])
-      #     intermediate_weights = tf.where(compare, weights[i], weights[i+1])
-      #     self.G = tf.where(compare, G[i], G[i+1])
-      #   else:
-      #     compare = tf.greater_equal(intermediate_weights, weights[i+1])
-      #     intermediate_weights = tf.where(compare, intermediate_weights, weights[i+1])
-      #     self.G = tf.where(compare, self.G, G[i+1])
+      final_x = tf.cast(f_left_shift - f, tf.float32)
+      activated = []
+      final_x = tf.unpack(final_x)
+      for i in range(self.T):
+        activated.append(tf.multiply(G[i], final_x[i]))
+      activated = tf.pack(activated)
 
+      self.G = tf.reduce_sum(activated, axis=0)
 
-      # # self.compare = tf.greater_equal(self.weight_one, self.weight_two)
-      # # self.intermediate_weights = tf.where(self.compare, self.weight_one, self.weight_two)
-      # # self.G = tf.where(self.compare, self.G_one, self.G_two)
-      # # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_three)
-      # # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_three)
-      # # self.G = tf.where(self.compare, self.G, self.G_three)
-      # # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_four)
-      # # self.intermediate_weights = tf.where(self.compare, self.intermediate_weights, self.weight_four)
-      # # self.G = tf.where(self.compare, self.G, self.G_four)
-      # # self.compare = tf.greater_equal(self.intermediate_weights, self.weight_five)
-      # # self.G = tf.where(self.compare, self.G, self.G_five)
+      alphas_d = []
+      for i in range(self.T):
+        alphas_d.append(self.alpha_d(i))
 
+      self.weights_d = []
+      for a in alphas_d:
+        self.weights_d.append(tf.exp(a))
 
-      # self.D, self.D_logits = \
-      #     self.discriminator(inputs, reuse=False)
-      # self.sampler = self.sampler(self.z)
+      self.probs_d = [self.weights_d[i]/sum(self.weights_d) for i in range(self.T)] 
 
-      # D = []
-      # for i in range(self.T):
-      #   D.append(self.discriminator(self.G, reuse=True))
-      # # self.D_one, self.D_logits_one = \
-      # #     self.discriminator(self.G, reuse=True)
-      # # self.D_two, self.D_logits_two = \
-      # #     self.discriminator(self.G, reuse=True)     
-      # # self.D_three, self.D_logits_three = \
-      # #     self.discriminator(self.G, reuse=True)
-      # # self.D_four, self.D_logits_four = \
-      # #     self.discriminator(self.G, reuse=True)   
-      # # self.D_five, self.D_logits_five = \
-      # #     self.discriminator(self.G, reuse=True)      
+      self.D, self.D_logits = \
+      self.discriminator(inputs, reuse=False)
+      self.sampler = self.sampler(self.z)
+      D = []
+      DL = []
+      for i in range(self.T):
+        d, dl = self.discriminator(self.G, reuse=True)
+        D.append(tf.multiply(d, self.probs_d[i]))
+        DL.append(tf.multiply(dl, self.probs_d[i]))
+   
+      self.D_logits_ = tf.add_n(DL)
+      self.D_ = tf.add_n(D)
 
-      # self.D_logits_ = tf.divide(tf.add_n(D), self.T)
-      # self.D_ = tf.divide(tf.add_n(D), self.T)
-
-      # self.D_logits_ = tf.divide(tf.add_n([self.D_logits_one, self.D_logits_two, self.D_logits_three, self.D_logits_four, self.D_logits_five]), self.T)
-      # self.D_ = tf.divide(tf.add_n(self.D_one, self.D_two, self.D_three, self.D_four, self.D_five), self.T)
+    ###############
 
     self.d_sum = histogram_summary("d", self.D)
     self.d__sum = histogram_summary("d_", self.D_)
@@ -417,6 +398,7 @@ class DCGAN(object):
               self.y: batch_labels,
               self.h: h
           })
+
         else:
           # Update D network
           _, summary_str = self.sess.run([d_optim, self.d_sum],
@@ -441,6 +423,8 @@ class DCGAN(object):
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
           % (epoch, idx, batch_idxs,
             time.time() - start_time, errD_fake+errD_real, errG))
+         weights = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.weights_d]
+        print(weights)
 
         if np.mod(counter, 100) == 1:
           if config.dataset == 'mnist':
