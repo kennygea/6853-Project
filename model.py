@@ -207,7 +207,7 @@ class DCGAN(object):
       activated = tf.pack(activated)
 
       self.G = tf.reduce_sum(activated, axis=0)
-
+      
       alphas_d = []
       for i in range(self.T):
         alphas_d.append(self.alpha_d(i))
@@ -221,6 +221,8 @@ class DCGAN(object):
       self.D, self.D_logits = \
       self.discriminator(inputs, reuse=False)
       self.sampler = self.sampler(self.z)
+      print(inputs.get_shape())
+      print(self.G.get_shape())
       D = []
       DL = []
       for i in range(self.T):
@@ -281,6 +283,7 @@ class DCGAN(object):
       self.loss_file_writer = open('mnist_loss.txt', 'w')
       # self.weights_file_writer = open('mnist_weights.txt', 'w')
     else:
+      self.loss_file_writer = open('celebA_lost.txt', 'w')
       data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
     #np.random.shuffle(data)
 
