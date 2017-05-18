@@ -32,7 +32,7 @@ class DCGAN(object):
       dfc_dim: (optional) Dimension of discrim units for fully connected layer. [1024]
       c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
     """
-    self.T = 5
+    self.T = 1
     self.delta = float(1e-7)
     self.sigmoid_multiplier = float(1e7)
     self.sess = sess
