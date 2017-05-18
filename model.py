@@ -278,6 +278,8 @@ class DCGAN(object):
     """Train DCGAN"""
     if config.dataset == 'mnist':
       data_X, data_y = self.load_mnist()
+      self.loss_file_writer = open('')
+      self.weights_file_writer = open('')
     else:
       data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
     #np.random.shuffle(data)
@@ -423,8 +425,11 @@ class DCGAN(object):
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
           % (epoch, idx, batch_idxs,
             time.time() - start_time, errD_fake+errD_real, errG))
-         weights = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.weights_d]
-        print(weights)
+        probs = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.probs]
+        print(probs)
+
+        probs_d = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.probs_d]
+        print(probs_d)
 
         if np.mod(counter, 100) == 1:
           if config.dataset == 'mnist':
