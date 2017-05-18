@@ -423,7 +423,7 @@ class DCGAN(object):
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
           % (epoch, idx, batch_idxs,
             time.time() - start_time, errD_fake+errD_real, errG))
-         weights = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.weights_d]
+        weights = [i.eval({self.z: batch_z, self.y: batch_labels,self.h: h}) for i in self.weights_d]
         print(weights)
 
         if np.mod(counter, 100) == 1:
