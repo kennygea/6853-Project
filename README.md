@@ -29,6 +29,10 @@ To test with an existing model:
 
 This Mix-DCGAN repository was build off Taehoon Kim's / [@carpedm20](http://carpedm20.github.io/) DCGAN implementation. The MIX-GAN is based off of the paper written in: [Generalization and Equilibrium in Generative Adversarial Nets ](https://arxiv.org/abs/1703.00573)
 
+## Training and Testing with CelebA:
+ - Download the image_align_celeba data set and put in in /data/[dir_name]
+ - Then to train, run:
+ 	$ python3 main.py --dataset dir_name --input_height 64 --is_train --crop
 
 ## Current Status
  - T=5 set currently
