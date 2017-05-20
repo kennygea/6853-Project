@@ -32,11 +32,12 @@ This Mix-DCGAN repository was build off Taehoon Kim's / [@carpedm20](http://carp
 ## Training and Testing with CelebA:
  - Download the image_align_celeba data set and put in in /data/[dir_name]
  - Then to train, run:
+
  	$ python3 main.py --dataset dir_name --input_height 64 --is_train --crop
 
 ## Current Status
- - T=5 set currently
- - Change self.T in model.py to set number of parallel Generators and Discriminators
+ - Working with both MNIST and CelebA
+ - Change self.T in model.py to change the number of Generator and Discriminators you want to train with
 
 ## Author
 Kenny Gea, Logan Engstrom 
