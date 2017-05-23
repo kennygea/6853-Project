@@ -1,0 +1,54 @@
+\message{ !name(6853_project_paper.tex)}\documentclass{article}
+\usepackage{hyperref}
+\usepackage{amsfonts}
+\usepackage{cite}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage[noend]{algpseudocode}
+\usepackage[margin=1.5in]{geometry}
+\usepackage{algorithm}
+\bibliographystyle{authordate1}
+\usepackage[square, sort]{natbib}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol}
+\newcommand\inner[2]{\langle #1, #2 \rangle}
+\newcommand*\Let[2]{\State #1 $\gets$ #2}
+\algrenewcommand\algorithmicrequire{\textbf{Precondition:}}
+\algrenewcommand\algorithmicensure{\textbf{Postcondition:}}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newcommand*\conj[1]{\overline{#1}}
+\newcommand*\bb[1]{\mathbb{#1}}
+\newcommand*\cc[1]{\mathcal{#1}}
+\newcommand*\wto{\rightharpoonup}
+\newcommand*\Id{\text{Id}}
+\newcommand*\im{\text{im}}
+\DeclareMathOperator{\spn}{span}
+\DeclareMathOperator{\dimens}{dim}
+\newtheorem{innercustomgeneric}{\customgenericname}
+\providecommand{\customgenericname}{}
+\newcommand{\newcustomtheorem}[2]{%
+  \newenvironment{#1}[1]
+  {%
+   \renewcommand\customgenericname{#2}%
+   \renewcommand\theinnercustomgeneric{##1}%
+   \innercustomgeneric
+  }
+  {\endinnercustomgeneric}
+}
+
+\newcustomtheorem{customthm}{Theorem}
+\newcustomtheorem{customlemma}{Lemma}
+
+\title{6.853 Final Project: Generalization and Equilibrium in Generative Adversarial Nets}
+\author{Logan Engstrom and Kenny Gea}
+\date{\today}
+
+\begin{document}
+
+\message{ !name(6853_project_paper.tex) !offset(1) }
+\subsection{Introduction}
+Generative Adversarial Networks (GANs) are a neural network framework introduced by \citet{Goodfellow2014} for estimating generative models from data. The framework consists of two models, a generator $G$ that captures the distribution of the data, and a discriminator $D$ that predicts the probability that a given sample is from the true data distribution or from the distribution estimated by $G$. Intuitively, $D$ is trained by minimizing the probability of making a mistake in classifying samples, and $G$ is trained by maximizing the probability that $D$ makes a mistake. The framework corresponds to a two player minimax game, so in the space of functions for $G$, $D$, there must exist a $(G,D)$ solution corresponding to a Nash Equilibrium. Since their inception, GANs have become the dominant method for fitting generative models to complex data \citep{Arora17} and have been applied to a variety of problems successfully, such as creating cryptographic protocols \citep{Abadi16} and aiding reinforcement learning \citep{FinnGL16}.
+
+\message{ !name(6853_project_paper.tex) !offset(38) }
+
+\end{document}
