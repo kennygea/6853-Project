@@ -102,12 +102,12 @@ class DCGAN(object):
     self.h = tf.placeholder(tf.float64, [], name="h")
 
     if self.y_dim:
-      G = []
+      self.G_ = []
       for i in range(self.T):
         if i == 0:
-          G.append(self.generator(self.z, self.y))
+          self.G_.append(self.generator(self.z, self.y))
         else:
-          G.append(self.generator(self.z, self.y, reuse=True))
+          self.G_.append(self.generator(self.z, self.y, reuse=True))
       # self.G_one = self.generator(self.z, self.y)
       # self.G_two = self.generator(self.z, self.y, reuse=True)
       # self.G_three = self.generator(self.z, self.y, reuse=True)
@@ -138,7 +138,7 @@ class DCGAN(object):
       activated = []
       final_x = tf.unpack(final_x)
       for i in range(self.T):
-        activated.append(tf.multiply(G[i], final_x[i]))
+        activated.append(tf.multiply(self.G_[i], final_x[i]))
       activated = tf.pack(activated)
 
       self.G = tf.reduce_sum(activated, axis=0)
