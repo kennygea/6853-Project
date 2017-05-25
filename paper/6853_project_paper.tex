@@ -49,15 +49,21 @@
 
 \begin{document}
 \maketitle
-
-\section{Literature Review}
-\subsection{Introduction}
+\section{Introduction}
 Generative Adversarial Networks (GANs) are a neural network framework introduced by \citet{Goodfellow2014} for estimating generative models from data. The framework consists of two models, a generator $G$ that captures the distribution of the data, and a discriminator $D$ that predicts the probability that a given sample is from the true data distribution or from the distribution estimated by $G$. Intuitively, $D$ is trained by minimizing the probability of making a mistake in classifying samples, and $G$ is trained by maximizing the probability that $D$ makes a mistake. The framework corresponds to a two player minimax game, so in the space of functions for $G$, $D$, there must exist a $(G,D)$ solution corresponding to a Nash Equilibrium. Since their inception, GANs have become the dominant method for fitting generative models to complex data \citep{Arora17} and have been applied to a variety of problems successfully, such as creating cryptographic protocols \citep{Abadi16} and aiding reinforcement learning \citep{FinnGL16}.
 
+\section{Literature Review}
 \subsection{Theoretical and Practical Limitations of GANs}
-Despite the promise of GANs, fundamental problems in training and architecting GANs persist. Training GANs requires finding a Nash equilibrium of a non convex game parameterized in a high-dimensional, continuous space, a difficult problem \citep{Goodfellow17} \citep{Salimans2016}. In addition, in the traditional GAN setup we must find a pure Nash equilibrium \citep{Arora17}, which does not necessarily exist for general games. Generally GANs are trained using iterative gradient descent optimization techniques designed to find the minimum of a cost function – in particular, these optimization techniques are not designed to find the Nash equilibrium of a game \citep{Salimans2016}. As a result, sometimes when these algorithms are used for finding Nash equilibria they do not converge; one common problem is reaching a stable orbit, in which a modification to the discriminator's parameters that reduces the discriminator cost could in turn increase the generator’s cost. Then in the next round a modification to the generator’s parameters reduces the generator’s cost, but increases the discriminator cost, creating a circular feedback loop in which the algorithm never reaches equilibrium \citep{Salimans2016}. In general, training instability makes GANs often very hard to train \citep{DBLP:journals/corr/GulrajaniAADC17}.
+Despite the promise of GANs, fundamental problems in training and architecting GANs persist. Generally, training GANs requires finding a Nash equilibrium of a non convex game parameterized in a high-dimensional, continuous space, a difficult and unsolved problem area \citep{Salimans2016}. In addition, in the traditional GAN setup we must find a pure Nash equilibrium \citep{Arora17}, which does not necessarily exist for general games. Generally GANs are trained using iterative gradient descent optimization techniques designed to find the minimum of a cost function – in particular, these optimization techniques are not designed to find the Nash equilibrium of a game \citep{Salimans2016}. As a result, sometimes when these algorithms are used for finding Nash equilibria they do not converge; one common problem is reaching a stable orbit, in which a modification to the discriminator's parameters that reduces the discriminator cost could in turn increase the generator’s cost. Then in the next round a modification to the generator’s parameters reduces the generator’s cost, but increases the discriminator cost, creating a circular feedback loop in which the algorithm never reaches equilibrium \citep{Salimans2016}. In general, training instability makes GANs often very hard to train \citep{DBLP:journals/corr/GulrajaniAADC17}.
 \\
-GANs have practical issues beyond the lack of theoretical guarantees and general training difficulties. Despite breakthroughs in speed and accuracy of generative models for images, larger scale images generated with GANs often lose finer texture details and have recurring artifacts \citep{DBLP:journals/corr/LedigTHCATTWS16} \citep{Salimans2016} \citep{DBLP:journals/corr/ShrivastavaPTSW16}. In addition to problems generating images, the application of GANs to discrete problems is limited due to the difficulty of backpropagation through discrete random variables, along with the general instability of the GAN training objective \citep{Che+al-2017-augmented}. 
+GANs have practical issues beyond the lack of theoretical guarantees and general training difficulties. Despite breakthroughs in speed and accuracy of generative models for images, larger scale images generated with GANs often lose finer texture details and have recurring artifacts \citep{DBLP:journals/corr/LedigTHCATTWS16} \citep{Salimans2016} \citep{DBLP:journals/corr/ShrivastavaPTSW16}.
+\begin{figure}[H]
+\centering
+\includegraphics[width=.25\linewidth]{figures/artifacting_example.png}
+\caption{Example of ``checkerboard'' GAN Artifacting from \citep{Salimans2016}}
+\label{artefacting}
+\end{figure}
+In addition to problems generating images, the application of GANs to discrete problems is limited due to the difficulty of backpropagation through discrete random variables, along with the general instability of the GAN training objective \citep{Che+al-2017-augmented}. 
 
 \subsection{Recent GAN Improvements}
 Experimentally driven GAN research has recently included applying traditional artificial neural networks architectures to GANs. One particularly successful such endeavor has been the application of deep convolutional layers to classical GAN problems such as image generation, such as with the DCGAN architecture \citep{DBLP:journals/corr/RadfordMC15}. Possibly the most active area of research has been in improving training for GANs, with much of recent work on GANs focussing on finding ways of stabilizing GAN training \citep{Salimans2016} \citep{DBLP:journals/corr/ArjovskyCB17} \citep{DBLP:conf/nips/NowozinCT16} \citep{DBLP:journals/corr/MetzPPS16}. \citet{DBLP:journals/corr/RadfordMC15} published guidelines on how to architect the generator and discriminator for more stable training. They provide specific recommendations based on experimental research, such the use of batch normalization in both networks and the deployment of LeakyReLU activations in the discriminator only. In addition, \citet{DBLP:journals/corr/HjelmJCCB17} provides a solution for more stable training for discrete generative problems using the GAN architecture. \citet{Salimans2016} provides another set of solutions for more stable GAN training. They introduce historical averaging of parameters in an attempt to compensate for the stable orbit problem, feature mapping to modify the loss function to fit on intermediate layer activations rather than the final layer activations, and a few other small architectural changes. \citet{Salimans2016} also introduced a now-popular evaluation metric for image based GANs based off of accuracy when classifying generated images with the Inception image classification network. One of the most important works in GAN research was \citet{DBLP:journals/corr/ArjovskyCB17}, which introduced a new training objective and architecture (the Wasserstein GAN) that empirically appears to lead to more stable training. Since the Wasserstein GAN was released, a variety of other papers building on the idea have emerged. One example is \citet{DBLP:journals/corr/GulrajaniAADC17}, which provides additional empirically researched methods for better GAN stability. In particular, \citep{Arora17} builds on several aspects of the Wasserstein GAN results. 
@@ -124,23 +130,21 @@ MIX+GAN provides an extension to traditional GANs. It is relatively easy to impl
     \label{fig:fig1-b}%
     \includegraphics[width=.481\linewidth]{figures/CelebA_T=1_Sample.png}
   }\\
-  \caption[Figure 1]{MIX+DCGAN vs DCGAN Samples from training on CelebA. 
-    \subref{fig:fig1-a} shows samples from MIX+DCGAN with 5 Generators and 5 Discriminators; \subref{fig:fig1-b} shows samples from DCGAN.
-  }
+  \caption{MIX+DCGAN vs DCGAN Samples from training on CelebA. \protect\subref{fig:fig1-a} shows samples from MIX+DCGAN with 5 Generators and 5 Discriminators; \protect\subref{fig:fig1-b} shows samples from DCGAN.}
   \label{fig:ex3}%
 \end{figure}
 
 \begin{figure}[!htb]%
   \centering
   \includegraphics[width=.85\linewidth]{figures/Loss_Graph_CelebA_T=5.png}
-  \caption[Figure 2]{Adversarial losses for MIX+DCGAN with 5 Generators and 5 Discriminators from training on CelebA}
+  \caption{Adversarial losses for MIX+DCGAN with 5 Generators and 5 Discriminators from training on CelebA}
   \label{fig2}
 \end{figure}
 
 \begin{figure}[!htb]%
   \centering
   \includegraphics[width=.85\linewidth]{figures/Loss_Graph_CelebA_T=1.png}
-  \caption[Figure 3]{Adversarial losses for DCGAN from training on CelebA}
+  \caption{Adversarial losses for DCGAN from training on CelebA}
   \label{fig3}
 \end{figure}
 
@@ -155,8 +159,8 @@ MIX+GAN provides an extension to traditional GANs. It is relatively easy to impl
     \label{fig:fig4-b}%
     \includegraphics[width=.481\linewidth]{figures/MNIST_T=1_Sample.png}
   }\\
-  \caption[Figure 4]{MIX+DCGAN vs DCGAN Samples from training on MNIST. 
-    \subref{fig:fig4-a} shows samples from MIX+DCGAN with 5 Generators and 5 Discriminators; \subref{fig:fig4-b} shows samples from DCGAN.
+  \caption{MIX+DCGAN vs DCGAN Samples from training on MNIST. 
+    \protect\subref{fig:fig4-a} shows samples from MIX+DCGAN with 5 Generators and 5 Discriminators; \protect\subref{fig:fig4-b} shows samples from DCGAN.
   }
   \label{fig:ex4}%
 \end{figure}
@@ -164,14 +168,14 @@ MIX+GAN provides an extension to traditional GANs. It is relatively easy to impl
 \begin{figure}[!htb]%
   \centering
   \includegraphics[width=.85\linewidth]{figures/Loss_Graph_MNIST_T=5.png}
-  \caption[Figure 5]{Adversarial losses for MIX+DCGAN with 5 Generators and 5 Discriminators from training on MNIST}
+  \caption{Adversarial losses for MIX+DCGAN with 5 Generators and 5 Discriminators from training on MNIST}
   \label{fig5}
 \end{figure}
 
 \begin{figure}[!htb]%
   \centering
   \includegraphics[width=.85\linewidth]{figures/Loss_Graph_MNIST_T=1.png}
-  \caption[Figure 6]{Adversarial losses for DCGAN from training on MNIST}
+  \caption{Adversarial losses for DCGAN from training on MNIST}
   \label{fig6}
 \end{figure}
 
