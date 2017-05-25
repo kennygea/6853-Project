@@ -8,7 +8,7 @@
 \usepackage{cite}
 \usepackage{amsmath,amsthm,amssymb}
 \usepackage[noend]{algpseudocode}
-\usepackage[margin=1.5in]{geometry}
+\usepackage[margin=1in]{geometry}
 \usepackage{algorithm}
 \bibliographystyle{authordate1}
 \usepackage[square, sort]{natbib}
@@ -83,7 +83,7 @@ And shows that it does generalize (Theorem $3.3$). Next, in Section 4 of the pap
 \[
   D(x) = \sum\limits_{i = 1}^k D_{v_i}(x) w_{v_i} \mbox{  } (\mbox{s.t.} \sum\limits_{i=1}^k w_{v_i} = 1)
 \]
-Note $D$ is also fully differentiable. The way the generator function and discriminator functions in MIX+GAN are defined make the payoffs for $D$ and $G$ identical to the payoffs for the mixtures of the component discriminators and generators. Note that large numbers of generators/discriminators are impractical, so the authors just choose a $k$ large as can fit on the GPU's memory (often the theoretically justified $k$ for an approximate Nash Equilibrium is much larger than can fit on current GPUs).
+Note $D$, like $G$, is also fully differentiable so that backpropagation can be harnessed during training. The way the generator function and discriminator functions in MIX+GAN are defined make the payoffs for $D$ and $G$ identical to the payoffs for the mixtures of the component discriminators and generators. Note that large numbers of generators/discriminators are impractical, so the authors just choose a $k$ large as can fit on the GPU's memory (often the theoretically justified $k$ for an approximate Nash Equilibrium is much larger than can fit on current GPUs).
 
 \subsection{Implementation Details}
 We implemented MIX+GAN with ..........
