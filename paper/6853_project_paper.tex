@@ -1,5 +1,6 @@
 \documentclass{article}
-
+\usepackage{authblk}
+\usepackage{blindtext}
 \usepackage{subfig}
 \usepackage{graphicx}
 
@@ -43,12 +44,15 @@
 \newcustomtheorem{customthm}{Theorem}
 \newcustomtheorem{customlemma}{Lemma}
 
-\title{6.853 Final Project: Generalization and Equilibrium in Generative Adversarial Nets}
-\author{Logan Engstrom and Kenny Gea}
-\date{\today}
-
 \begin{document}
+\date{\today}
+\title{6.853 Final Project: Generalization and Equilibrium in Generative Adversarial Nets}
+\author{Logan Engstrom}
+\author{Kenny Gea}
+\affil{\textit {\{engstrom,kennygea\}@mit.edu}}
+
 \maketitle
+
 \section{Introduction}
 Generative Adversarial Networks (GANs) are a neural network framework introduced by \citet{Goodfellow2014} for estimating generative models from data. The framework consists of two models, a generator $G$ that captures the distribution of the data, and a discriminator $D$ that predicts the probability that a given sample is from the true data distribution or from the distribution estimated by $G$. Intuitively, $D$ is trained by minimizing the probability of making a mistake in classifying samples, and $G$ is trained by maximizing the probability that $D$ makes a mistake. The framework corresponds to a two player minimax game, so in the space of functions for $G$, $D$, there must exist a $(G,D)$ solution corresponding to a Nash Equilibrium. Since their inception, GANs have become the dominant method for fitting generative models to complex data \citep{Arora17} and have been applied to a variety of problems successfully, such as creating cryptographic protocols \citep{Abadi16} and aiding reinforcement learning \citep{FinnGL16}.
 
@@ -73,7 +77,7 @@ GANs are relatively new and are not fully understood at a theoretical level. Par
 
 \section{Paper and Implementation}
 \subsection{Overview}
-We implemented results from \cite{Arora17}. The paper's makes several contributions. First, the paper defines generalization; given a metric and two distributions, training generalizes if empirical distance, or the distance between the empirical distributions induced by the true distributions, approximates the distance between the true distributions. Note that when we train GANs, we are training the generator and discriminator off of empirical distributions (of the generator and of the generator's target distribution). The paper motivates the definition by showing that with high probability, for certain distributions, if the number of samples $m$ is not exponential in the dimensionality of the distribution then the Wasserstein distance:
+We implemented results from \citet{Arora17}. The paper's makes several contributions. First, the paper defines generalization; given a metric and two distributions, training generalizes if empirical distance, or the distance between the empirical distributions induced by the true distributions, approximates the distance between the true distributions. Note that when we train GANs, we are training the generator and discriminator off of empirical distributions (of the generator and of the generator's target distribution). The paper motivates the definition by showing that with high probability, for certain distributions, if the number of samples $m$ is not exponential in the dimensionality of the distribution then the Wasserstein distance:
 \[
   d_W(\mu, \nu) = \sup\limits_{f : 1 \mbox{ Lipschitz} } \mathop{\bb{E}}\limits_{x \sim \mu}[f(x)] - \mathop{\bb{E}}\limits_{x \sim \nu} [f(x)]
 \]
@@ -101,7 +105,7 @@ To test our implementation and to reproduce the results, we generated new images
 \\\\
 Note our figures are listed at the end of the paper. Qualitatively, we obtained samples as shown in Figure \ref{fig:ex3} (for CelebA) and Figure \ref{fig:ex4} (for MNIST). As one can see, there is a very slight improvement in the smoothness of the generated images using the MIX+DCGAN version on both the MNIST and CelebA datasets. So in this sense, MIX+DCGAN was an improvement over regular DCGAN. However, the increase in training time must be noted. Where as a regular DCGAN on CelebA took about $4$ to $5$ hours to train, our MIX+DCGAN implementation took $>24$ hours to train. Considering the relatively minute increase in quality, we are not convinced this $>5$ times increase in training time is justified. Further more, the sheer size of variables that need to be training in a deep convolutional model forced us to move training onto a dedicated GPU machine. In addition, for a visualization of how the multiple discriminators interact to generate the overall generated image, refer to subfigures $(c)$ through $(g)$ in Figure \ref{fig:ex4}, which represent the results from each trained generator in our trained MIX+GAN system for the MNIST dataset. 
 \\\\
-Quantitatively, we logged the loss output of the discriminators and generators and tracked it over iterations of training, as seen in Figures \ref{fig2}, \ref{fig3}, \ref{fig5}, and \ref{fig6}. As one can see, there isn't a good indicator of what loss number correlates to a well trained model. So long as the loss stabalizes and doesn't collapse, this usually indicates the model is being trained properly. This leads to the question of what exactly is a good metric for GANs. In \cite{Arora17}, the authors use the inception score to qualitatively judge what worked better, but when put along side qualitative trade offs such as training time for images that aren't noticably superior, the question of a good metric for GANs remains open. 
+Quantitatively, we logged the loss output of the discriminators and generators and tracked it over iterations of training, as seen in Figures \ref{fig2}, \ref{fig3}, \ref{fig5}, and \ref{fig6}. As one can see, there isn't a good indicator of what loss number correlates to a well trained model. So long as the loss stabalizes and doesn't collapse, this usually indicates the model is being trained properly. This leads to the question of what exactly is a good metric for GANs. In \citet{Arora17}, the authors use the inception score to qualitatively judge what worked better, but when put along side qualitative trade offs such as training time for images that aren't noticably superior, the question of a good metric for GANs remains open. 
 
 \subsection{Discussion}
 MIX+GAN provides an extension to traditional GANs. It is relatively easy to implement, and requires little hyperparameter tuning - important considering the general difficulties encountered when training GANs. MIX+GAN does not significantly advance the state of the art in terms of beating benchmarks or in terms of providing significantly higher quality qualitative results as compared to other leading GAN architectures, such as \citet{DBLP:journals/corr/HuangLPHB16}, \citet{Salimans2016}, and \citet{DBLP:journals/corr/OdenaOS16}. \citet{Arora17} also does provide the first proof that an approximate pure equilibrium exists with a certain distance metric (the Wasserstein metric). Importantly, however, the paper does not prove any guarantees about whether any given algorithm (such as backpropagation, in the paper's work) can actually find it. One of the problems in the paper is that the results are difficult to benchmark against other methods, as few quantitative measures are given and qualitatively the results shown are difficult to differentiate from the benchmarks presented in the paper (e.g., the MIX+DCGAN MNIST results don't look particularly different or improved from the original DCGAN MNIST results).
